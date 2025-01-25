@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "541205888594",
+    "project_id": "jihan-3868e",
+    "storage_bucket": "jihan-3868e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:541205888594:android:21e1b50965631c8fe6298b",
+        "android_client_info": {
+          "package_name": "com.example.tablets"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADNg88z5yJtYh9ibaZrIGGn6wKwrVV3v8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

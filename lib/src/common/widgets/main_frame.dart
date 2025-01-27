@@ -36,9 +36,9 @@ class MainFrame extends ConsumerWidget {
       onTap: (index) {
         if (index == 0 && (formData['name'] == null || formData['date'] == null)) {
           failureUserMessage(context, 'تأكد من ملى حقول القائمة اولا');
-        } else if (index == 0 && GoRouter.of(context).state!.path != '/cart') {
+        } else if (index == 0 && GoRouter.of(context).state.path != '/cart') {
           GoRouter.of(context).goNamed(AppRoute.cart.name);
-        } else if (index == 1 && GoRouter.of(context).state!.path != '/home') {
+        } else if (index == 1 && GoRouter.of(context).state.path != '/home') {
           GoRouter.of(context).goNamed(AppRoute.home.name);
         } else {
           errorPrint('Error or repeated URI');

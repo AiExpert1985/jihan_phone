@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/features/home/controller/last_access_provider.dart';
 import 'package:tablets/src/features/home/controller/salesman_info_provider.dart';
@@ -16,49 +17,67 @@ import 'package:tablets/src/features/transactions/repository/products_repository
 import 'package:tablets/src/features/transactions/repository/transactions_repository_provider.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    loadData(context, ref);
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _isLoading = false; // Loading state
+
+  @override
+  Widget build(BuildContext context) {
     return MainFrame(
       includeBottomNavigation: true,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ButtonContainer('وصل قبض', AppRoute.receipt.name),
+            ButtonContainer('وصل قبض', AppRoute.receipt.name, onLoading: _setLoading),
             const SizedBox(height: 50),
-            ButtonContainer('قائمة بيع', AppRoute.invoice.name),
+            ButtonContainer('قائمة بيع', AppRoute.invoice.name, onLoading: _setLoading),
+            VerticalGap.xxl,
+            if (_isLoading) const CircularProgressIndicator()
           ],
         ),
       ),
     );
   }
+
+  void _setLoading(bool loading) {
+    setState(() {
+      _isLoading = loading; // Update loading state
+    });
+  }
 }
 
 class ButtonContainer extends ConsumerWidget {
-  const ButtonContainer(this.label, this.routeName, {super.key});
+  const ButtonContainer(this.label, this.routeName, {super.key, required this.onLoading});
 
   final String label;
   final String routeName;
+  final Function(bool) onLoading; // Callback to set loading state
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: () async {
+        onLoading(true); // Set loading to true
+        await loadData(context, ref);
         final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
         final formDataNotifier = ref.read(formDataContainerProvider.notifier);
         formDataNotifier.reset();
-        if (context.mounted) {
-          GoRouter.of(context).goNamed(routeName);
-        }
         // when receipt or invoice is pressed, all cart items are deleted
         final cartNotifier = ref.read(cartProvider.notifier);
         cartNotifier.reset();
         // set access date to now
         lastAccessNotifier.setLastAccessDate();
+        if (context.mounted) {
+          GoRouter.of(context).goNamed(routeName);
+        }
+        onLoading(false); // Set loading to false after data is loaded
       },
       child: Container(
         width: 250,

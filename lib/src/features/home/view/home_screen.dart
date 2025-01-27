@@ -9,7 +9,7 @@ import 'package:tablets/src/features/home/controller/salesman_info_provider.dart
 import 'package:tablets/src/features/login/repository/accounts_repository.dart';
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
-import 'package:tablets/src/features/transactions/controllers/products_provider.dart';
+import 'package:tablets/src/features/transactions/controllers/products_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
 import 'package:tablets/src/features/transactions/controllers/transaction_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/repository/customer_repository_provider.dart';
@@ -101,7 +101,7 @@ class ButtonContainer extends ConsumerWidget {
 }
 
 // unlike products, we set customers ones
-Future<void> setSalesmanCustomers(WidgetRef ref) async {
+Future<void> setSalesmanCustomersProvider(WidgetRef ref) async {
   final salesmanInfoNotifier = ref.read(salesmanInfoProvider.notifier);
   final email = FirebaseAuth.instance.currentUser!.email;
   final repository = ref.read(accountsRepositoryProvider);
@@ -131,8 +131,8 @@ Future<void> setSalesmanCustomers(WidgetRef ref) async {
 Future<void> setProductsProvider(WidgetRef ref) async {
   final productsRepository = ref.read(productsRepositoryProvider);
   final products = await productsRepository.fetchItemListAsMaps();
-  final productsNotifier = ref.read(productsProvider.notifier);
-  productsNotifier.setItems(products);
+  final dbCache = ref.read(productsDbCacheProvider.notifier);
+  dbCache.set(products);
 }
 
 Future<void> setTranasctionsProvider(WidgetRef ref) async {
@@ -158,7 +158,7 @@ Future<void> loadData(BuildContext context, WidgetRef ref) async {
   //   }
   // }
   if (customerDbCache.data.isEmpty || oneDayPassed) {
-    await setSalesmanCustomers(ref);
+    await setSalesmanCustomersProvider(ref);
   }
   if (transactionDbCache.data.isEmpty || oneDayPassed) {
     await setTranasctionsProvider(ref);

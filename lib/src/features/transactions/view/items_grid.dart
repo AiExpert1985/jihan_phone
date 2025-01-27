@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tablets/src/common/forms/edit_box.dart';
+import 'package:tablets/src/common/functions/debug_print.dart';
 import 'package:tablets/src/common/functions/utils.dart';
 import 'package:tablets/src/common/values/constants.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/image_titled.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
-import 'package:tablets/src/features/transactions/controllers/products_provider.dart';
+import 'package:tablets/src/features/transactions/controllers/products_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
+import 'package:tablets/src/features/transactions/controllers/transaction_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/model/item.dart';
 import 'package:tablets/src/features/transactions/model/product.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
@@ -27,8 +29,8 @@ class _ItemsGridState extends ConsumerState<ItemsGrid> {
   @override
   Widget build(BuildContext context) {
     // Watch the filtered products provider
-    final filteredItemsNotifier = ref.read(productsProvider.notifier);
-    List<Map<String, dynamic>> filteredProducts = filteredItemsNotifier.data;
+    final productDbCache = ref.read(productsDbCacheProvider.notifier);
+    List<Map<String, dynamic>> filteredProducts = productDbCache.data;
 
     // Filter products based on the search query
     List<Map<String, dynamic>> displayedProducts = _searchQuery.isEmpty
@@ -84,6 +86,7 @@ class _ItemsGridState extends ConsumerState<ItemsGrid> {
                         salesmanCommission: product.salesmanCommission,
                         sellingPrice: price,
                         giftQuantity: 0,
+                        stock: _calculateProductStock(ref, product.dbRef),
                       );
                       GoRouter.of(context).pushNamed(AppRoute.add.name, extra: item);
                     },
@@ -98,5 +101,39 @@ class _ItemsGridState extends ConsumerState<ItemsGrid> {
         ),
       ),
     );
+  }
+
+  double _calculateProductStock(WidgetRef ref, String productDbRef) {
+    final productDbCache = ref.read(productsDbCacheProvider.notifier);
+    final targetProduct = productDbCache.getItemByDbRef(productDbRef);
+    final initialStock = targetProduct['initialQuantity'];
+    double stock = initialStock.toDouble();
+    final transactionDbRef = ref.read(transactionDbCacheProvider.notifier);
+    final transactions = transactionDbRef.data;
+    for (var transaction in transactions) {
+      final transactionType = transaction['transactionType'];
+      if (transactionType == TransactionType.customerReceipt.name ||
+          transactionType == TransactionType.vendorReceipt.name ||
+          transactionType == TransactionType.expenditures.name) {
+        continue;
+      }
+      for (var item in transaction['items'] ?? []) {
+        if (item['dbRef'] != productDbRef) continue;
+        if (transactionType == TransactionType.customerInvoice.name ||
+            transactionType == TransactionType.vendorReturn.name ||
+            transactionType == TransactionType.gifts.name ||
+            transactionType == TransactionType.damagedItems.name) {
+          stock -= item['soldQuantity'] ?? 0;
+          stock -= item['giftQuantity'] ?? 0;
+        } else if (transactionType == TransactionType.vendorInvoice.name ||
+            transactionType == TransactionType.customerReturn.name) {
+          stock += item['soldQuantity'] ?? 0;
+          stock += item['giftQuantity'] ?? 0;
+        } else {
+          errorPrint('wrong transaction type');
+        }
+      }
+    }
+    return stock;
   }
 }

@@ -109,6 +109,9 @@ class _AddItemState extends ConsumerState<AddItem> {
           child: FormInputField(
             initialValue: cartItem.soldQuantity,
             onChangedFn: (value) {
+              if (cartItem.stock < value) {
+                failureUserMessage(context, 'المخزون اقل من العدد المطلوب');
+              }
               setState(() {
                 cartItem.soldQuantity = value;
                 cartItem.totalAmount = value * cartItem.sellingPrice ?? 0;
@@ -154,6 +157,10 @@ class _AddItemState extends ConsumerState<AddItem> {
           IconButton(
             icon: const ApproveIcon(),
             onPressed: () {
+              if (_isInValidateQuantity()) {
+                failureUserMessage(context, 'المخزون اقل من العدد المطلوب');
+                return;
+              }
               // all fields must be filled
               if (cartItem.sellingPrice == null ||
                   cartItem.soldQuantity == null ||
@@ -175,5 +182,13 @@ class _AddItemState extends ConsumerState<AddItem> {
         ],
       ),
     );
+  }
+
+  bool _isInValidateQuantity() {
+    final requiredQuantity = (cartItem.soldQuantity ?? 0) + (cartItem.giftQuantity ?? 0);
+    if (cartItem.stock < requiredQuantity) {
+      return true;
+    }
+    return false;
   }
 }

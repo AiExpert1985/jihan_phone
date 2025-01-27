@@ -16,6 +16,7 @@ class CartItem {
   double? totalWeight;
   double? itemTotalProfit;
   double? salesmanTotalCommission;
+  double stock;
 
   // Constructor
   CartItem({
@@ -27,6 +28,7 @@ class CartItem {
     required this.imageUrls,
     required this.buyingPrice,
     required this.salesmanCommission,
+    required this.stock,
     this.sellingPrice,
     this.soldQuantity,
     this.giftQuantity,
@@ -56,27 +58,28 @@ class CartItem {
       'totalWeigt': totalWeight,
       'itemTotalProfit': itemTotalProfit,
       'salesmanTotalProfit': salesmanTotalCommission,
+      'stock': stock,
     };
   }
 
   // Factory constructor to create a CartItem from a Map (for deserialization)
   factory CartItem.fromMap(Map<String, dynamic> map) {
     return CartItem(
-      code: map['code'] ?? 0,
-      name: map['name'] ?? 'unnamed',
-      dbRef: map['dbRef'] ?? 'xxxx',
-      productDbRef: map['productDbRef'] ?? 'yyyy',
-      weight: map['weight'] ?? 0,
-      imageUrls: map['imageUrls'] ?? [defaultImageUrl],
-      buyingPrice: map['buyingPrice'] ?? 0,
-      salesmanCommission: map['salesmanCommission'] ?? 0,
-      sellingPrice: map['sellingPrice'],
-      soldQuantity: map['soldQuantity'],
-      giftQuantity: map['giftQuantity'],
-      totalAmount: map['totalAmount'],
-      totalWeight: map['totalWeigt'],
-      itemTotalProfit: map['itemTotalProfit'],
-      salesmanTotalCommission: map['salesmanTotalProfit'],
-    );
+        code: map['code'] ?? 0,
+        name: map['name'] ?? 'unnamed',
+        dbRef: map['dbRef'] ?? 'xxxx',
+        productDbRef: map['productDbRef'] ?? 'yyyy',
+        weight: map['weight'] ?? 0,
+        imageUrls: map['imageUrls'] ?? [defaultImageUrl],
+        buyingPrice: map['buyingPrice'] ?? 0,
+        salesmanCommission: map['salesmanCommission'] ?? 0,
+        sellingPrice: map['sellingPrice'],
+        soldQuantity: map['soldQuantity'],
+        giftQuantity: map['giftQuantity'],
+        totalAmount: map['totalAmount'],
+        totalWeight: map['totalWeigt'],
+        itemTotalProfit: map['itemTotalProfit'],
+        salesmanTotalCommission: map['salesmanTotalProfit'],
+        stock: map['stock'] ?? 0);
   }
 }

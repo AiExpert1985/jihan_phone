@@ -7,7 +7,7 @@ import 'package:tablets/src/common/values/constants.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/image_titled.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
-import 'package:tablets/src/features/transactions/controllers/filtered_products_provider.dart';
+import 'package:tablets/src/features/transactions/controllers/products_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
 import 'package:tablets/src/features/transactions/model/item.dart';
 import 'package:tablets/src/features/transactions/model/product.dart';
@@ -27,7 +27,7 @@ class _ItemsGridState extends ConsumerState<ItemsGrid> {
   @override
   Widget build(BuildContext context) {
     // Watch the filtered products provider
-    final filteredItemsNotifier = ref.read(filteredProductsProvider.notifier);
+    final filteredItemsNotifier = ref.read(productsProvider.notifier);
     List<Map<String, dynamic>> filteredProducts = filteredItemsNotifier.data;
 
     // Filter products based on the search query

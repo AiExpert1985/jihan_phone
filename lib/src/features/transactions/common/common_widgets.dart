@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tablets/src/common/functions/utils.dart';
+import 'package:tablets/src/common/widgets/main_frame.dart';
 
 class StyledTotalText extends StatelessWidget {
   const StyledTotalText(this.text, {super.key});
@@ -10,7 +12,7 @@ class StyledTotalText extends StatelessWidget {
       text,
       style: const TextStyle(
         color: Colors.yellow,
-        fontSize: 18,
+        fontSize: 20,
       ),
     );
   }
@@ -28,8 +30,24 @@ class FormFieldLabel extends StatelessWidget {
       child: Text(
         label,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 16, color: Colors.white),
+        style: const TextStyle(fontSize: 18, color: Colors.white),
       ),
     );
   }
+}
+
+Widget buildTotalAmount(BuildContext context, dynamic amount, String label) {
+  return Container(
+    height: 50,
+    width: 350,
+    padding: const EdgeInsets.all(5),
+    decoration:
+        const BoxDecoration(color: itemsColor, borderRadius: BorderRadius.all(Radius.circular(6))),
+    child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+      StyledTotalText(label),
+      amount is DateTime
+          ? StyledTotalText(formatDate(amount))
+          : StyledTotalText(doubleToStringWithComma(amount)),
+    ]),
+  );
 }

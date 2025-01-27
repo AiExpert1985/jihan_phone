@@ -2,15 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:tablets/generated/l10n.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 
+double iconFontSize = 18;
+double iconSize = 30;
+
 class ApproveIcon extends StatelessWidget {
   const ApproveIcon({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      const Icon(Icons.check, color: Colors.green),
+      Icon(
+        Icons.check,
+        color: Colors.green,
+        size: iconSize,
+      ),
       VerticalGap.s,
-      Text(S.of(context).approve, style: const TextStyle(color: Colors.white))
+      Text(S.of(context).approve, style: TextStyle(color: Colors.white, fontSize: iconFontSize))
     ]);
   }
 }
@@ -20,10 +27,14 @@ class SaveInvoice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(children: [
-      Icon(Icons.check, color: Colors.green),
+    return Column(children: [
+      Icon(
+        Icons.check,
+        color: Colors.green,
+        size: iconSize,
+      ),
       VerticalGap.s,
-      Text('حفظ القائمة', style: TextStyle(color: Colors.white))
+      Text('حفظ القائمة', style: TextStyle(color: Colors.white, fontSize: iconFontSize))
     ]);
   }
 }
@@ -33,14 +44,14 @@ class AddItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(children: [
+    return Column(children: [
       Icon(
         Icons.add,
         color: Colors.green,
-        size: 30,
+        size: iconSize,
       ),
       VerticalGap.s,
-      Text('اضافة مادة', style: TextStyle(color: Colors.white)),
+      Text('اضافة مادة', style: TextStyle(color: Colors.white, fontSize: iconFontSize)),
     ]);
   }
 }
@@ -51,12 +62,17 @@ class MainMenuIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      const Icon(Icons.menu, color: Colors.white),
+      Icon(
+        Icons.menu,
+        color: Colors.white,
+        size: iconSize,
+      ),
       HorizontalGap.s,
-      Text(
-        S.of(context).main_menu,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
-      )
+      Text(S.of(context).main_menu,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: iconFontSize,
+          ))
     ]);
   }
 }
@@ -67,11 +83,15 @@ class HomeReturnIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      const Icon(Icons.home, color: Colors.red, size: 30),
+      Icon(
+        Icons.home,
+        color: Colors.red,
+        size: iconSize,
+      ),
       HorizontalGap.s,
       Text(
         S.of(context).home_page,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: iconFontSize),
       )
     ]);
   }
@@ -85,10 +105,14 @@ class NavigationBackButton extends StatelessWidget {
     return Row(children: [
       Text(
         S.of(context).back,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: iconFontSize),
       ),
       HorizontalGap.s,
-      const Icon(Icons.arrow_forward_ios_outlined, color: Colors.white, size: 20)
+      Icon(
+        Icons.arrow_forward_ios_outlined,
+        color: Colors.white,
+        size: iconSize,
+      )
     ]);
   }
 }
@@ -99,9 +123,16 @@ class SaveIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      const Icon(Icons.check, color: Colors.green),
+      Icon(
+        Icons.check,
+        color: Colors.green,
+        size: iconSize,
+      ),
       VerticalGap.s,
-      Text(S.of(context).save)
+      Text(
+        S.of(context).save,
+        style: TextStyle(fontSize: iconFontSize),
+      )
     ]);
   }
 }
@@ -112,12 +143,13 @@ class CancelIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      const Icon(
+      Icon(
         Icons.close,
         color: Colors.red,
+        size: iconSize,
       ),
       VerticalGap.s,
-      Text(S.of(context).cancel, style: const TextStyle(color: Colors.white)),
+      Text(S.of(context).cancel, style: TextStyle(color: Colors.white, fontSize: iconFontSize)),
     ]);
   }
 }
@@ -129,9 +161,13 @@ class DeleteIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(Icons.delete, color: Colors.red),
+        Icon(
+          Icons.delete,
+          color: Colors.red,
+          size: iconSize,
+        ),
         VerticalGap.s,
-        Text(S.of(context).delete),
+        Text(S.of(context).delete, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -144,9 +180,13 @@ class AddIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(Icons.add, color: Colors.white),
+        Icon(
+          Icons.add,
+          color: Colors.white,
+          size: iconSize,
+        ),
         VerticalGap.s,
-        Text(S.of(context).add),
+        Text(S.of(context).add, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -159,9 +199,13 @@ class SearchIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(Icons.search, color: Colors.red),
+        Icon(
+          Icons.search,
+          color: Colors.red,
+          size: iconSize,
+        ),
         VerticalGap.s,
-        Text(S.of(context).search),
+        Text(S.of(context).search, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -174,9 +218,13 @@ class ReportsIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(Icons.report, color: Colors.red),
+        Icon(
+          Icons.report,
+          color: Colors.red,
+          size: iconSize,
+        ),
         VerticalGap.s,
-        Text(S.of(context).reports),
+        Text(S.of(context).reports, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -189,9 +237,12 @@ class AddImageIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(Icons.image),
+        Icon(
+          Icons.image,
+          size: iconSize,
+        ),
         VerticalGap.s,
-        Text(S.of(context).add),
+        Text(S.of(context).add, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -204,13 +255,13 @@ class NewIemIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(
+        Icon(
           Icons.add,
           color: Colors.green,
-          size: 25,
+          size: iconSize,
         ),
         VerticalGap.s,
-        Text(S.of(context).new_item),
+        Text(S.of(context).new_item, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -223,13 +274,13 @@ class EditIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(
+        Icon(
           Icons.edit_document,
           color: Colors.orangeAccent,
-          size: 25,
+          size: iconSize,
         ),
         VerticalGap.s,
-        Text(S.of(context).edit),
+        Text(S.of(context).edit, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -247,9 +298,12 @@ class PrintIcon extends StatelessWidget {
         //   width: 25,
         //   height: 22,
         // ),
-        const Icon(Icons.print),
+        Icon(
+          Icons.print,
+          size: iconSize,
+        ),
         VerticalGap.s,
-        Text(S.of(context).print),
+        Text(S.of(context).print, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -269,13 +323,17 @@ class PrintedIcon extends StatelessWidget {
         //   width: 25,
         //   height: 22,
         // ),
-        const Icon(
+        Icon(
           Icons.print,
           color: Colors.white,
+          size: iconSize,
         ),
         VerticalGap.s,
 
-        Text(S.of(context).printed, style: const TextStyle(color: Colors.white)),
+        Text(
+          S.of(context).printed,
+          style: TextStyle(color: Colors.white, fontSize: iconFontSize),
+        )
       ]),
     );
   }
@@ -288,12 +346,13 @@ class ShareIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(
+        Icon(
           Icons.share,
           color: Colors.blue,
+          size: iconSize,
         ),
         VerticalGap.s,
-        Text(S.of(context).share),
+        Text(S.of(context).share, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -306,12 +365,13 @@ class GoNextIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(
+        Icon(
           Icons.navigate_next,
           color: Colors.green,
+          size: iconSize,
         ),
         VerticalGap.s,
-        Text(S.of(context).next),
+        Text(S.of(context).next, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -324,12 +384,13 @@ class GoPreviousIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(
+        Icon(
           Icons.navigate_before,
           color: Colors.green,
+          size: iconSize,
         ),
         VerticalGap.s,
-        Text(S.of(context).previous),
+        Text(S.of(context).previous, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -342,12 +403,13 @@ class GoFirstIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(
+        Icon(
           Icons.first_page,
           color: Colors.green,
+          size: iconSize,
         ),
         VerticalGap.s,
-        Text(S.of(context).first),
+        Text(S.of(context).first, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -360,12 +422,13 @@ class GoLastIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(
+        Icon(
           Icons.last_page,
           color: Colors.green,
+          size: iconSize,
         ),
         VerticalGap.s,
-        Text(S.of(context).last),
+        Text(S.of(context).last, style: TextStyle(fontSize: iconFontSize)),
       ],
     );
   }
@@ -382,9 +445,10 @@ class LocaleAwareLogoutIcon extends StatelessWidget {
       // for arabic,
       return Transform.flip(
         flipX: true,
-        child: const Icon(
+        child: Icon(
           Icons.logout,
           color: Colors.white,
+          size: iconSize,
         ),
       );
     }

@@ -12,7 +12,8 @@ import 'package:tablets/src/routers/go_router_provider.dart';
 // these colors are taken from Omar caffee mobile web app, given by Mahmood
 const bgColor = Color(0xFF573419);
 const itemsColor = Color(0xFF9C551F);
-const mainFrameIconsColor = Color.fromARGB(103, 255, 235, 59);
+const mainFrameIconsColor = Colors.white;
+// const mainFrameIconsColor = Color.fromARGB(103, 255, 235, 59);
 
 class MainFrame extends ConsumerWidget {
   const MainFrame({required this.child, this.includeBottomNavigation = true, super.key});
@@ -53,6 +54,9 @@ class MainFrame extends ConsumerWidget {
       backgroundColor: itemsColor,
       selectedItemColor: mainFrameIconsColor,
       unselectedItemColor: mainFrameIconsColor,
+      selectedFontSize: 20,
+      unselectedFontSize: 20,
+      iconSize: 30,
     );
   }
 }
@@ -72,10 +76,11 @@ PreferredSizeWidget customAppBar(BuildContext context) {
         icon: const Icon(
           Icons.do_disturb_on_outlined,
           color: mainFrameIconsColor,
+          size: 30,
         ),
         label: Text(
           S.of(context).logout,
-          style: const TextStyle(color: mainFrameIconsColor),
+          style: const TextStyle(color: mainFrameIconsColor, fontSize: 20),
         ),
       ),
     ],

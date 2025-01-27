@@ -67,7 +67,7 @@ class ShoppingCart extends ConsumerWidget {
                         ),
                       ),
                       VerticalGap.s,
-                      _buildReceiptTotalAmount(context, totalAmount),
+                      buildTotalAmount(context, totalAmount, 'المجموع'),
                       _buildButtons(
                           context, ref, totalAmount, totalProfit, totalCommission, totalWeight)
                     ],
@@ -182,14 +182,14 @@ class ShoppingCart extends ConsumerWidget {
               Text(
                 formData['name'],
                 style:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             if (formData['date'] != null) VerticalGap.l,
             if (formData['date'] != null)
               Text(
                 formatDate(formData['date']),
                 style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
               ),
           ],
         ),
@@ -219,20 +219,20 @@ class ShoppingCart extends ConsumerWidget {
           child: Card(
             color: itemsColor,
             child: Container(
-              width: 300,
+              width: 350,
               padding: const EdgeInsets.all(10.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       CircledContainer(child: Text((sequence + 1).toString())),
                       Expanded(
                         child: Text(
                           cartItem.name,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 15, color: Colors.yellow),
+                          style: const TextStyle(fontSize: 17, color: Colors.yellow),
                           overflow: TextOverflow.visible, // Optional: Control overflow behavior
                         ),
                       ),
@@ -257,27 +257,14 @@ class ShoppingCart extends ConsumerWidget {
     );
   }
 
-  Widget _buildReceiptTotalAmount(BuildContext context, double transactionTotalAmount) {
-    return Container(
-      width: 300,
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-      decoration: const BoxDecoration(
-          color: itemsColor, borderRadius: BorderRadius.all(Radius.circular(6))),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-        const StyledTotalText('المجموع'),
-        StyledTotalText(doubleToStringWithComma(transactionTotalAmount)),
-      ]),
-    );
-  }
-
   Widget _buildCell(String columnName, double columnValue) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(columnName, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        Text(columnName, style: const TextStyle(color: Colors.white, fontSize: 15)),
         VerticalGap.s,
         Text(doubleToStringWithComma(columnValue),
-            style: const TextStyle(color: Colors.white, fontSize: 12))
+            style: const TextStyle(color: Colors.white, fontSize: 15))
       ],
     );
   }

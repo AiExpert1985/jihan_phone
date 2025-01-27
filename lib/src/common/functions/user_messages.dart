@@ -16,7 +16,10 @@ void _message(BuildContext context, String message, type) {
     // backgroundColor: itemsColor,
     // foregroundColor: Colors.yellow,
     context: context, // optional if you use ToastificationWrapper
-    title: Text(message),
+    title: Text(
+      message,
+      style: const TextStyle(fontSize: 17),
+    ),
     autoCloseDuration: const Duration(seconds: 5),
     type: type,
     style: ToastificationStyle.flatColored,

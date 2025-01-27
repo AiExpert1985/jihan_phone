@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:intl/intl.dart';
 import 'package:tablets/generated/l10n.dart';
 import 'package:tablets/src/common/forms/form_filed_decoration.dart';
 import 'package:tablets/src/common/forms/form_validation.dart';
@@ -50,10 +51,11 @@ class FormDatePickerField extends StatelessWidget {
           child: child ?? Container(color: itemsColor),
         );
       },
+      format: DateFormat('dd-MM-yyyy', 'en_US'),
       enabled: !isReadOnly,
       decoration: formFieldDecoration(label: label, hideBorders: hideBorders),
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 14, color: Colors.white),
+      style: const TextStyle(fontSize: 18, color: Colors.white),
       name: name,
       initialValue: initialValue,
       // fieldHintText: S.of(context).date_picker_hint,

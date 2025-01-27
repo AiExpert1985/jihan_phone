@@ -32,7 +32,7 @@ class DropDownWithSearch extends ConsumerWidget {
       mode: Mode.form,
       enabled: !isReadOnly,
       decoratorProps: DropDownDecoratorProps(
-        baseStyle: const TextStyle(fontSize: 14, color: Colors.white),
+        baseStyle: const TextStyle(fontSize: 18, color: Colors.white),
         textAlign: TextAlign.center,
         decoration: formFieldDecoration(label: label, hideBorders: hideBorders),
       ),
@@ -46,7 +46,7 @@ class DropDownWithSearch extends ConsumerWidget {
                 child: Text(
                   label!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, color: Colors.white),
+                  style: const TextStyle(fontSize: 18, color: Colors.white),
                 ),
               )
             : null,
@@ -89,7 +89,7 @@ Widget popUpItem(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
       child: ListTile(
         selected: isSelected,
-        title: Text(item['name'], style: const TextStyle(fontSize: 14, color: Colors.white)),
+        title: Text(item['name'], style: const TextStyle(fontSize: 18, color: Colors.white)),
         // subtitle: Text(item.code.toString()),
         leading: CircleAvatar(
           // radius: 70,

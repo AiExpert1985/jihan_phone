@@ -21,7 +21,7 @@ class FormInputField extends ConsumerWidget {
     required this.name,
     super.key,
     this.textColor = Colors.white,
-    this.fontSize = 14,
+    this.fontSize = 18,
     this.useThousandSeparator = true,
   });
 

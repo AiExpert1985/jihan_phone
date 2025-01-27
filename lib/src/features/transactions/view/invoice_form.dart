@@ -45,7 +45,7 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
               _buildNameSelection(context, formDataNotifier),
               VerticalGap.xl,
               _buildDate(context, formDataNotifier),
-              VerticalGap.xxl,
+              VerticalGap.xl,
               if (customerDebt != null) buildTotalAmount(context, customerDebt, 'الدين الكلي'),
               VerticalGap.m,
               if (latestCustomerReceiptDate != null)
@@ -53,7 +53,7 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
               VerticalGap.m,
               if (latestCustomerInvoiceDate != null)
                 buildTotalAmount(context, latestCustomerReceiptDate, 'اخر تسديد'),
-              VerticalGap.xxl,
+              VerticalGap.xl,
               _buildButtons(context, formDataNotifier),
             ],
           ),

@@ -36,13 +36,14 @@ class FormFieldLabel extends StatelessWidget {
   }
 }
 
-Widget buildTotalAmount(BuildContext context, dynamic amount, String label) {
+Widget buildTotalAmount(BuildContext context, dynamic amount, String label,
+    {Color bgColor = itemsColor}) {
   return Container(
     height: 50,
     width: 350,
     padding: const EdgeInsets.all(5),
     decoration:
-        const BoxDecoration(color: itemsColor, borderRadius: BorderRadius.all(Radius.circular(6))),
+        BoxDecoration(color: bgColor, borderRadius: const BorderRadius.all(Radius.circular(6))),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
       StyledTotalText(label),
       amount is DateTime

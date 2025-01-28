@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tablets/src/common/forms/edit_box.dart';
+import 'package:tablets/src/common/functions/debug_print.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/functions/utils.dart';
 import 'package:tablets/src/common/values/constants.dart';
@@ -11,7 +13,6 @@ import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/features/transactions/common/common_widgets.dart';
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/model/item.dart';
-import 'package:transparent_image/transparent_image.dart';
 
 class AddItem extends ConsumerStatefulWidget {
   const AddItem(this.item, {super.key});
@@ -42,7 +43,7 @@ class _AddItemState extends ConsumerState<AddItem> {
           children: [
             _buildTitle(),
             VerticalGap.xl,
-            _buildImage(),
+            _buildImageSlider(),
             VerticalGap.xl,
             _buildPrice(),
             VerticalGap.l,
@@ -57,14 +58,41 @@ class _AddItemState extends ConsumerState<AddItem> {
     );
   }
 
-  Widget _buildImage() {
-    return CachedNetworkImage(
-      fit: BoxFit.cover,
-      height: 150,
-      width: 200,
-      imageUrl: cartItem.coverImageUrl,
-      progressIndicatorBuilder: (context, url, downloadProgress) => Image.memory(kTransparentImage),
-      errorWidget: (context, url, error) => const Icon(Icons.error),
+  // Widget _buildImage() {
+  //   return CachedNetworkImage(
+  //     fit: BoxFit.cover,
+  //     height: 150,
+  //     width: 200,
+  //     imageUrl: cartItem.coverImageUrl,
+  //     progressIndicatorBuilder: (context, url, downloadProgress) => Image.memory(kTransparentImage),
+  //     errorWidget: (context, url, error) => const Icon(Icons.error),
+  //   );
+  // }
+  Widget _buildImageSlider() {
+    final imageUrls = cartItem.imageUrls;
+    // int displayedUrlIndex = imageUrls.isNotEmpty ? imageUrls.length - 1 : 0;
+    return CarouselSlider(
+      items: imageUrls
+          .map(
+            (url) => CachedNetworkImage(
+              fit: BoxFit.cover,
+              height: MediaQuery.of(context).size.height,
+              imageUrl: url,
+              progressIndicatorBuilder: (context, url, downloadProgress) =>
+                  CircularProgressIndicator(value: downloadProgress.progress),
+              errorWidget: (context, url, error) {
+                errorPrint('Error loading image: $error');
+                return const Icon(Icons.error);
+              },
+            ),
+          )
+          .toList(),
+      options: CarouselOptions(
+        // onPageChanged: (index, reason) => displayedUrlIndex = index,
+        height: 175,
+        autoPlay: true,
+        initialPage: imageUrls.isNotEmpty ? imageUrls.length - 1 : 0,
+      ),
     );
   }
 
@@ -72,7 +100,7 @@ class _AddItemState extends ConsumerState<AddItem> {
     return Text(
       cartItem.name,
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
     );
   }
 

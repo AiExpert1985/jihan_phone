@@ -44,9 +44,10 @@ class ShoppingCart extends ConsumerWidget {
         child: Container(
             padding: const EdgeInsets.all(5),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: cartItems.isEmpty
                   ? [
+                      VerticalGap.xl,
                       _buildTransactionInfo(context, formData),
                       SizedBox(
                         width: double.infinity,
@@ -58,7 +59,9 @@ class ShoppingCart extends ConsumerWidget {
                           context, ref, totalAmount, totalProfit, totalCommission, totalWeight)
                     ]
                   : [
+                      VerticalGap.xl,
                       _buildTransactionInfo(context, formData),
+                      VerticalGap.l,
                       Expanded(
                         child: ListView(
                           shrinkWrap:
@@ -66,8 +69,9 @@ class ShoppingCart extends ConsumerWidget {
                           children: _buildItemList(context, ref, cartItems),
                         ),
                       ),
-                      VerticalGap.s,
+                      VerticalGap.l,
                       buildTotalAmount(context, totalAmount, 'المجموع'),
+                      VerticalGap.l,
                       _buildButtons(
                           context, ref, totalAmount, totalProfit, totalCommission, totalWeight)
                     ],
@@ -115,7 +119,7 @@ class ShoppingCart extends ConsumerWidget {
                   name: formData['name'],
                   imageUrls: [defaultImageUrl],
                   number: 0,
-                  date: formData['date'],
+                  date: DateTime.now(),
                   currency: 'دينار',
                   transactionType: TransactionType.customerInvoice.name,
                   subTotalAmount: totalAmount,
@@ -153,7 +157,7 @@ class ShoppingCart extends ConsumerWidget {
       itemsList.add({
         'buyingPrice': cartItems[i].buyingPrice,
         'code': cartItems[i].code,
-        'dbRef': cartItems[i].dbRef,
+        'dbRef': cartItems[i].productDbRef,
         'giftQuantity': cartItems[i].giftQuantity,
         'itemTotalAmount': cartItems[i].totalAmount,
         'itemTotalProfit': cartItems[i].itemTotalProfit,
@@ -184,13 +188,13 @@ class ShoppingCart extends ConsumerWidget {
                 style:
                     const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
               ),
-            if (formData['date'] != null) VerticalGap.l,
-            if (formData['date'] != null)
-              Text(
-                formatDate(formData['date']),
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
+            // if (formData['date'] != null) VerticalGap.l,
+            // if (formData['date'] != null)
+            //   Text(
+            //     formatDate(formData['date']),
+            //     style:
+            //         const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            //   ),
           ],
         ),
       ),

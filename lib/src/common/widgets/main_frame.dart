@@ -36,7 +36,7 @@ class MainFrame extends ConsumerWidget {
     final formData = ref.read(formDataContainerProvider);
     return BottomNavigationBar(
       onTap: (index) {
-        if (index == 0 && (formData['name'] == null || formData['date'] == null)) {
+        if (index == 0 && formData['name'] == null) {
           failureUserMessage(context, 'تأكد من ملى حقول القائمة اولا');
         } else if (index == 0 && GoRouter.of(context).state.path != '/cart') {
           GoRouter.of(context).goNamed(AppRoute.cart.name);

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tablets/src/common/forms/date_picker.dart';
 import 'package:tablets/src/common/forms/drop_down_with_search.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/values/gaps.dart';
@@ -23,16 +22,17 @@ class InvoiceForm extends ConsumerStatefulWidget {
 }
 
 class _ReceiptFormState extends ConsumerState<InvoiceForm> {
-  dynamic customerDebt;
-  dynamic latestCustomerReceiptDate;
-  dynamic latestCustomerInvoiceDate;
+  num? totalDebt;
+  num? dueDebt;
+  dynamic latestReceiptDate;
+  dynamic latestInvoiceDate;
   bool isValidUser = true;
 
   @override
   Widget build(BuildContext context) {
     final formDataNotifier = ref.read(formDataContainerProvider.notifier);
     ref.watch(formDataContainerProvider);
-    Color customerInfoBgColor = isValidUser ? itemsColor : Colors.red;
+    Color infoBgColor = isValidUser ? itemsColor : Colors.red;
 
     return MainFrame(
       child: Center(
@@ -40,25 +40,26 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           width: 400,
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               VerticalGap.xl,
               buildScreenTitle(context, 'قائمة بيع'),
               VerticalGap.xl,
               _buildNameSelection(context, formDataNotifier),
+              // VerticalGap.xl,
+              // _buildDate(context, formDataNotifier),
               VerticalGap.xl,
-              _buildDate(context, formDataNotifier),
-              VerticalGap.xl,
-              if (customerDebt != null)
-                buildTotalAmount(context, customerDebt, 'الدين الكلي',
-                    bgColor: customerInfoBgColor),
+              if (totalDebt != null)
+                buildTotalAmount(context, dueDebt, 'الدين المستحق', bgColor: infoBgColor),
               VerticalGap.m,
-              if (latestCustomerReceiptDate != null)
-                buildTotalAmount(context, latestCustomerInvoiceDate, 'اخر قائمة',
-                    bgColor: customerInfoBgColor),
+              if (totalDebt != null)
+                buildTotalAmount(context, totalDebt, 'الدين الكلي', bgColor: infoBgColor),
               VerticalGap.m,
-              if (latestCustomerInvoiceDate != null)
-                buildTotalAmount(context, latestCustomerReceiptDate, 'اخر تسديد',
-                    bgColor: customerInfoBgColor),
+              if (latestReceiptDate != null)
+                buildTotalAmount(context, latestInvoiceDate, 'اخر قائمة', bgColor: infoBgColor),
+              VerticalGap.m,
+              if (latestInvoiceDate != null)
+                buildTotalAmount(context, latestReceiptDate, 'اخر تسديد', bgColor: infoBgColor),
               VerticalGap.xl,
               _buildButtons(context, formDataNotifier),
             ],
@@ -80,15 +81,18 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
           child: DropDownWithSearch(
             initialValue: formDataNotifier.data['name'],
             onChangedFn: (customer) {
+              num paymentDurationLimit = customer['paymentDurationLimit'];
               formDataNotifier.addProperty('name', customer['name']);
               formDataNotifier.addProperty('nameDbRef', customer['dbRef']);
               formDataNotifier.addProperty('sellingPriceType', customer['sellingPriceType']);
-              final customerDebtInfo = getCustomerDbetInfo(ref, customer['dbRef']);
+              final customerDebtInfo =
+                  getCustomerDbetInfo(ref, customer['dbRef'], paymentDurationLimit);
               // set customer debt info
-              customerDebt = customerDebtInfo['totalDebt'];
-              latestCustomerReceiptDate = customerDebtInfo['lastReceiptDate'];
-              latestCustomerInvoiceDate = customerDebtInfo['latestInvoiceDate'];
-              _validateCustomer(customer['paymentDurationLimit'], customer['creditLimit']);
+              totalDebt = customerDebtInfo['totalDebt'];
+              dueDebt = customerDebtInfo['dueDebt'];
+              latestReceiptDate = customerDebtInfo['lastReceiptDate'] ?? 'لا يوجد';
+              latestInvoiceDate = customerDebtInfo['latestInvoiceDate'] ?? 'لا يوجد';
+              _validateCustomer(paymentDurationLimit, customer['creditLimit']);
             },
             dbCache: salesmanCustomersDb,
           ),
@@ -97,24 +101,24 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
     );
   }
 
-  Widget _buildDate(BuildContext context, MapStateNotifier formDataNotifier) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const FormFieldLabel('التاريخ'),
-        HorizontalGap.l,
-        Expanded(
-          child: FormDatePickerField(
-            initialValue: formDataNotifier.data['date'],
-            onChangedFn: (date) {
-              formDataNotifier.addProperty('date', date);
-            },
-            name: 'date',
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildDate(BuildContext context, MapStateNotifier formDataNotifier) {
+  //   return Row(
+  //     mainAxisAlignment: MainAxisAlignment.center,
+  //     children: [
+  //       const FormFieldLabel('التاريخ'),
+  //       HorizontalGap.l,
+  //       Expanded(
+  //         child: FormDatePickerField(
+  //           initialValue: formDataNotifier.data['date'],
+  //           onChangedFn: (date) {
+  //             formDataNotifier.addProperty('date', date);
+  //           },
+  //           name: 'date',
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildButtons(BuildContext context, MapStateNotifier formDataNotifier) {
     final cartNotifier = ref.read(cartProvider.notifier);
@@ -126,8 +130,9 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
           IconButton(
             icon: const AddItem(),
             onPressed: () {
-              if (formDataNotifier.data.containsKey('date') &
-                  formDataNotifier.data.containsKey('name') &
+              if (formDataNotifier.data.containsKey('name') &
+                  // formDataNotifier.data.containsKey('date') &
+
                   formDataNotifier.data.containsKey('nameDbRef')) {
                 cartNotifier.reset();
                 GoRouter.of(context).pushNamed(AppRoute.items.name);
@@ -143,21 +148,20 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
 
 // customer is invalid, if he has debt, and exceeded max number of days (debt limit)
   void _validateCustomer(num paymentDurationLimit, num creditLimit) {
+    if (totalDebt == null || dueDebt == null) return;
     // if customer has zero debt, then he is a valid suer
-    if (customerDebt <= 0) {
+    if (totalDebt! <= 0) {
       isValidUser = true;
       return;
     }
-    if (customerDebt >= creditLimit) {
+    if (totalDebt! >= creditLimit) {
       isValidUser = false;
-      failureUserMessage(context, 'زبون متجاوز لحدود الدين');
+      // failureUserMessage(context, 'زبون متجاوز لحدود الدين');
       return;
     }
-    // if last invoice date exceeds the paymentDurationLimit, the the customer considered invalid
-    Duration difference = DateTime.now().difference(latestCustomerInvoiceDate);
-    if (difference.inDays >= paymentDurationLimit) {
+    if (dueDebt! > 0) {
       isValidUser = false;
-      failureUserMessage(context, 'زبون تجاوز مدة التسديد المسموحة');
+      // failureUserMessage(context, 'زبون تجاوز مدة التسديد المسموحة');
       return;
     }
   }

@@ -39,18 +39,18 @@ class _AddItemState extends ConsumerState<AddItem> {
       child: Container(
         padding: const EdgeInsets.all(30),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildTitle(),
-            VerticalGap.l,
+            // VerticalGap.l,
             _buildImageSlider(),
-            VerticalGap.l,
+            // VerticalGap.l,
             _buildPrice(),
-            VerticalGap.m,
+            // VerticalGap.m,
             _buildQuantity(),
-            VerticalGap.m,
+            // VerticalGap.m,
             _buildGift(),
-            VerticalGap.xl,
+            // VerticalGap.xl,
             _buildButtons(context, ref),
           ],
         ),
@@ -119,6 +119,7 @@ class _AddItemState extends ConsumerState<AddItem> {
                 cartItem.totalAmount = value * cartItem.soldQuantity ?? 0;
               });
             },
+            isReadOnly: true,
             dataType: FieldDataType.num,
             name: 'price',
           ),
@@ -187,7 +188,7 @@ class _AddItemState extends ConsumerState<AddItem> {
             onPressed: () {
               if (_isInValidateQuantity()) {
                 failureUserMessage(context, 'المخزون اقل من العدد المطلوب');
-                return;
+                // return;
               }
               // all fields must be filled
               if (cartItem.sellingPrice == null ||

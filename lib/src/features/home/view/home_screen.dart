@@ -17,42 +17,146 @@ import 'package:tablets/src/features/transactions/repository/customer_repository
 import 'package:tablets/src/features/transactions/repository/products_repository_provider.dart';
 import 'package:tablets/src/features/transactions/repository/transactions_repository_provider.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
+import 'package:tablets/src/features/transactions/common/common_widgets.dart';
+import 'package:tablets/src/common/forms/drop_down_with_search.dart';
+import 'package:tablets/src/features/transactions/common/customer_debt_info.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
-  _HomeScreenState createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  num? totalDebt;
+  num? dueDebt;
+  dynamic latestReceiptDate;
+  dynamic latestInvoiceDate;
+  bool isValidUser = true;
   bool _isLoading = false; // Loading state
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(formDataContainerProvider);
+    final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+
     return MainFrame(
-      includeBottomNavigation: true,
       child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ButtonContainer('وصل قبض', AppRoute.receipt.name, onLoading: _setLoading),
-            const SizedBox(height: 50),
-            ButtonContainer('قائمة بيع', AppRoute.invoice.name, onLoading: _setLoading),
-            VerticalGap.xxl,
-            if (_isLoading)
-              const Column(
-                children: [
-                  CircularProgressIndicator(),
-                  VerticalGap.xl,
-                  Text('مزامنة البيانات', style: TextStyle(color: Colors.white, fontSize: 14))
-                ],
-              )
-          ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          width: 400,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNameSelection(context, formDataNotifier),
+              if (formDataNotifier.data.containsKey('name')) _buildDebtInfo(),
+              if (formDataNotifier.data.containsKey('name')) _buildSelectionButtons(),
+              if (_isLoading) _buildLoadingIndicator()
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildDebtInfo() {
+    Color infoBgColor = isValidUser ? itemsColor : Colors.red;
+    return Column(
+      children: [
+        if (totalDebt != null)
+          buildTotalAmount(context, dueDebt, 'الدين المستحق', bgColor: infoBgColor),
+        VerticalGap.l,
+        if (totalDebt != null)
+          buildTotalAmount(context, totalDebt, 'الدين الكلي', bgColor: infoBgColor),
+        VerticalGap.l,
+        if (latestReceiptDate != null)
+          buildTotalAmount(context, latestInvoiceDate, 'اخر قائمة', bgColor: infoBgColor),
+        VerticalGap.l,
+        if (latestInvoiceDate != null)
+          buildTotalAmount(context, latestReceiptDate, 'اخر تسديد', bgColor: infoBgColor),
+      ],
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return const Column(children: [
+      CircularProgressIndicator(),
+      VerticalGap.xl,
+      Text('مزامنة البيانات', style: TextStyle(color: Colors.white, fontSize: 14))
+    ]);
+  }
+
+  Widget _buildSelectionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        TransactionSelectionButton('وصل قبض', AppRoute.receipt.name),
+        const SizedBox(width: 50),
+        TransactionSelectionButton('قائمة بيع', AppRoute.items.name),
+      ],
+    );
+  }
+
+  Widget _buildNameSelection(BuildContext context, MapStateNotifier formDataNotifier) {
+    final salesmanCustomersDb = ref.read(salesmanCustomerDbCacheProvider.notifier);
+    final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+    final cartNotifier = ref.read(cartProvider.notifier);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const FormFieldLabel('الزبون'),
+        HorizontalGap.l,
+        Expanded(
+          child: DropDownWithSearch(
+            initialValue: formDataNotifier.data['name'],
+            onChangedFn: (customer) {
+              // we reset form data because customer has been changed
+              formDataNotifier.reset();
+              // we also reset cart context
+              cartNotifier.reset();
+              // now process customer data, and debt data
+              num paymentDurationLimit = customer['paymentDurationLimit'];
+              formDataNotifier.addProperty('name', customer['name']);
+              formDataNotifier.addProperty('nameDbRef', customer['dbRef']);
+              formDataNotifier.addProperty('sellingPriceType', customer['sellingPriceType']);
+              final customerDebtInfo =
+                  getCustomerDbetInfo(ref, customer['dbRef'], paymentDurationLimit);
+              // set customer debt info
+              totalDebt = customerDebtInfo['totalDebt'];
+              dueDebt = customerDebtInfo['dueDebt'];
+              latestReceiptDate = customerDebtInfo['lastReceiptDate'] ?? 'لا يوجد';
+              latestInvoiceDate = customerDebtInfo['latestInvoiceDate'] ?? 'لا يوجد';
+              _validateCustomer(paymentDurationLimit, customer['creditLimit']);
+            },
+            dbCache: salesmanCustomersDb,
+          ),
+        ),
+        HorizontalGap.l,
+        DataRefreshButton(_setLoading),
+      ],
+    );
+  }
+
+// customer is invalid, if he has debt, and exceeded max number of days (debt limit)
+  void _validateCustomer(num paymentDurationLimit, num creditLimit) {
+    if (totalDebt == null || dueDebt == null) return;
+    // if customer has zero debt, then he is a valid suer
+    if (totalDebt! <= 0) {
+      isValidUser = true;
+      return;
+    }
+    if (totalDebt! >= creditLimit) {
+      isValidUser = false;
+      // failureUserMessage(context, 'زبون متجاوز لحدود الدين');
+      return;
+    }
+    if (dueDebt! > 0) {
+      isValidUser = false;
+      // failureUserMessage(context, 'زبون تجاوز مدة التسديد المسموحة');
+      return;
+    }
   }
 
   void _setLoading(bool loading) {
@@ -62,55 +166,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class ButtonContainer extends ConsumerWidget {
-  const ButtonContainer(this.label, this.routeName, {super.key, required this.onLoading});
+class TransactionSelectionButton extends ConsumerWidget {
+  const TransactionSelectionButton(this.label, this.routeName, {super.key});
 
   final String label;
   final String routeName;
-  final Function(bool) onLoading; // Callback to set loading state
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+
     return InkWell(
       onTap: () async {
-        onLoading(true); // Set loading to true
-        await loadData(context, ref);
-        if (!_isAllDataLoaded(ref)) {
+        if (formDataNotifier.data.containsKey('name') &
+            formDataNotifier.data.containsKey('nameDbRef')) {
           if (context.mounted) {
-            failureUserMessage(context, 'لم يتم مزامنة البيانات بصورة كاملة');
+            GoRouter.of(context).goNamed(routeName);
           }
-          return;
+        } else if (context.mounted) {
+          failureUserMessage(context, 'يرجى اختيار اسم الزبون');
         }
-        final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
-        final formDataNotifier = ref.read(formDataContainerProvider.notifier);
-        formDataNotifier.reset();
-        // when receipt or invoice is pressed, all cart items are deleted
-        final cartNotifier = ref.read(cartProvider.notifier);
-        cartNotifier.reset();
-        // set access date to now
-        lastAccessNotifier.setLastAccessDate();
-        if (context.mounted) {
-          GoRouter.of(context).goNamed(routeName);
-        }
-        onLoading(false); // Set loading to false after data is loaded
       },
       child: Container(
-        width: 250,
-        height: 150,
+        width: 150,
+        height: 100,
         decoration: BoxDecoration(
           border: Border.all(),
           borderRadius: const BorderRadius.all(Radius.circular(6)),
           color: itemsColor,
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(12),
         child: Center(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
       ),
     );
+  }
+}
+
+class DataRefreshButton extends ConsumerWidget {
+  const DataRefreshButton(this.onLoading, {super.key});
+
+  final Function(bool) onLoading; // Callback to set loading state
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
+    return IconButton(
+        onPressed: () async {
+          onLoading(true); // Set loading to true
+          await loadData(context, ref);
+          if (!_isAllDataLoaded(ref)) {
+            if (context.mounted) {
+              failureUserMessage(context, 'لم يتم مزامنة البيانات بصورة كاملة');
+            }
+            return;
+          }
+          // set access date to now
+          lastAccessNotifier.setLastAccessDate();
+          onLoading(false); // Set loading to false after data is loaded
+        },
+        icon: const Icon(
+          Icons.refresh,
+          color: Colors.white,
+        ));
   }
 }
 
@@ -144,9 +266,6 @@ Future<void> setSalesmanCustomersProvider(WidgetRef ref) async {
   }
   final salesmanDbRef = salesmanInfoNotifier.dbRef;
   final customersRepository = ref.read(customerRepositoryProvider);
-  // // directly get only salesman customers, which reduces the number of documents fetched from firestore
-  // final salesmanCustomers = await customersRepository.fetchItemListAsMaps(
-  //     filterKey: 'salesmanDbRef ', filterValue: salesmanDbRef);
   final customers = await customersRepository.fetchItemListAsMaps();
   final salesmanCustomers = customers.where((customer) {
     return customer['salesmanDbRef'] == salesmanDbRef;
@@ -179,13 +298,6 @@ Future<void> loadData(BuildContext context, WidgetRef ref) async {
   // I update customers and transactions once perday for salesman, to avoid firebase expenses of loading
   // the data with each transaction
   final oneDayPassed = lastAccessNotifier.hasOneDayPassed();
-  // if (context.mounted) {
-  //   if (oneDayPassed) {
-  //     successUserMessage(context, 'one day passed');
-  //   } else {
-  //     failureUserMessage(context, 'nooop');
-  //   }
-  // }
   if (customerDbCache.data.isEmpty || oneDayPassed) {
     await setSalesmanCustomersProvider(ref);
   }

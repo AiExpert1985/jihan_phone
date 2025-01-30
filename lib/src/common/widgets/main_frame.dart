@@ -6,6 +6,7 @@ import 'package:tablets/generated/l10n.dart';
 import 'package:tablets/src/common/functions/debug_print.dart';
 import 'package:tablets/src/common/functions/dialog_delete_confirmation.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
+import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
 
@@ -33,15 +34,27 @@ class MainFrame extends ConsumerWidget {
   }
 
   Widget _buildBottomNavigation(BuildContext context, WidgetRef ref) {
-    final formData = ref.read(formDataContainerProvider);
+    final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+    final cartNotifier = ref.read(cartProvider.notifier);
     return BottomNavigationBar(
-      onTap: (index) {
-        if (index == 0 && formData['name'] == null) {
+      onTap: (index) async {
+        if (index == 0 && formDataNotifier.data['name'] == null) {
           failureUserMessage(context, 'لا يوجد قائمة مبيعات');
         } else if (index == 0 && GoRouter.of(context).state.path != '/cart') {
           GoRouter.of(context).goNamed(AppRoute.cart.name);
         } else if (index == 1 && GoRouter.of(context).state.path != '/home') {
-          GoRouter.of(context).goNamed(AppRoute.home.name);
+          // when back to home, all data is erased, user receives confirmation
+          final confiramtion = await showDeleteConfirmationDialog(
+              context: context,
+              messagePart1: "",
+              messagePart2: 'سوف يتم حذف القائمة عند العودة للواجهة الرئيسية');
+          if (confiramtion != null) {
+            formDataNotifier.reset();
+            cartNotifier.reset();
+            if (context.mounted) {
+              GoRouter.of(context).goNamed(AppRoute.home.name);
+            }
+          }
         } else {
           errorPrint('Error or repeated URI');
         }

@@ -106,7 +106,7 @@ class ShoppingCart extends ConsumerWidget {
               onPressed: () {
                 final formDataNotifier = ref.read(formDataContainerProvider.notifier);
                 if (formDataNotifier.data.isEmpty) {
-                  GoRouter.of(context).goNamed(AppRoute.invoice.name);
+                  GoRouter.of(context).goNamed(AppRoute.home.name);
                 } else {
                   GoRouter.of(context).goNamed(AppRoute.items.name);
                 }
@@ -175,7 +175,7 @@ class ShoppingCart extends ConsumerWidget {
 
   Widget _buildTransactionInfo(BuildContext context, Map<String, dynamic> formData) {
     return InkWell(
-      onTap: () => GoRouter.of(context).goNamed(AppRoute.invoice.name),
+      onTap: () => GoRouter.of(context).goNamed(AppRoute.home.name),
       child: Container(
         width: 250,
         padding: const EdgeInsets.all(10),
@@ -188,13 +188,6 @@ class ShoppingCart extends ConsumerWidget {
                 style:
                     const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
               ),
-            // if (formData['date'] != null) VerticalGap.l,
-            // if (formData['date'] != null)
-            //   Text(
-            //     formatDate(formData['date']),
-            //     style:
-            //         const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-            //   ),
           ],
         ),
       ),

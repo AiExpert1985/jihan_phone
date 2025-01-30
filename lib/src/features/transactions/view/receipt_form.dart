@@ -4,14 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/functions/utils.dart';
 import 'package:tablets/src/common/values/constants.dart';
-import 'package:tablets/src/common/forms/drop_down_with_search.dart';
 import 'package:tablets/src/common/forms/edit_box.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/custom_icons.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/features/home/controller/salesman_info_provider.dart';
 import 'package:tablets/src/features/transactions/common/common_functions.dart';
-import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
 import 'package:tablets/src/features/transactions/model/transaction.dart';
 import 'package:tablets/src/features/transactions/common/common_widgets.dart';
@@ -45,15 +43,11 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
                 VerticalGap.l,
                 buildScreenTitle(context, 'وصل قبض'),
                 VerticalGap.xl,
-                _buildNameSelection(context, formDataNotifier),
-                // VerticalGap.l,
-                // _buildDate(context, formDataNotifier),
+                _buildName(context, formDataNotifier),
                 VerticalGap.xl,
                 _buildReceiptNumber(context, formDataNotifier),
                 VerticalGap.xl,
                 _buildReceivedAmount(context, formDataNotifier),
-                // VerticalGap.l,
-                // _buildDiscountAmount(context, formDataNotifier),
                 VerticalGap.xxxl,
                 buildTotalAmount(context, total, 'المجموع'),
                 VerticalGap.xl,
@@ -67,21 +61,22 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
     );
   }
 
-  Widget _buildNameSelection(BuildContext context, MapStateNotifier formDataNotifier) {
-    final salesmanCustomersDb = ref.read(salesmanCustomerDbCacheProvider.notifier);
-
+  Widget _buildName(BuildContext context, MapStateNotifier formDataNotifier) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const FormFieldLabel('الزبون'),
+        const FormFieldLabel('اسم الزبون'),
         HorizontalGap.xl,
         Expanded(
-          child: DropDownWithSearch(
-            onChangedFn: (customer) {
-              formDataNotifier.addProperty('name', customer['name']);
-              formDataNotifier.addProperty('nameDbRef', customer['dbRef']);
+          child: FormInputField(
+            initialValue: formDataNotifier.data['name'],
+            useThousandSeparator: false,
+            onChangedFn: (value) {
+              formDataNotifier.addProperty('name', value);
             },
-            dbCache: salesmanCustomersDb,
+            dataType: FieldDataType.text,
+            name: 'name',
+            isReadOnly: true,
           ),
         ),
       ],
@@ -110,28 +105,6 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
     );
   }
 
-  // Widget _buildDiscountAmount(BuildContext context, MapStateNotifier formDataNotifier) {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.center,
-  //     children: [
-  //       const FormFieldLabel('الخصم'),
-  //       HorizontalGap.xl,
-  //       Expanded(
-  //         child: FormInputField(
-  //           onChangedFn: (value) {
-  //             formDataNotifier.addProperty('discount', value);
-  //             final subtotal = formDataNotifier.data['subTotalAmount'] ?? 0;
-  //             total = value + subtotal; // Update total
-  //             formDataNotifier.addProperty('totalAmount', total);
-  //           },
-  //           dataType: FieldDataType.num,
-  //           name: 'discount',
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
-
   Widget _buildReceiptNumber(BuildContext context, MapStateNotifier formDataNotifier) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -151,24 +124,6 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
       ],
     );
   }
-
-  // Widget _buildDate(BuildContext context, MapStateNotifier formDataNotifier) {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.center,
-  //     children: [
-  //       const FormFieldLabel('التاريخ'),
-  //       HorizontalGap.xl,
-  //       Expanded(
-  //         child: FormDatePickerField(
-  //           onChangedFn: (date) {
-  //             formDataNotifier.addProperty('date', date);
-  //           },
-  //           name: 'date',
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   Widget _buildButtons(BuildContext context, MapStateNotifier formDataNotifier) {
     return Container(

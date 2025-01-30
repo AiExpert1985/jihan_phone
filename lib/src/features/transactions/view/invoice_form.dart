@@ -40,27 +40,27 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           width: 400,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               VerticalGap.xl,
               buildScreenTitle(context, 'قائمة بيع'),
-              VerticalGap.xl,
+              VerticalGap.xxl,
               _buildNameSelection(context, formDataNotifier),
               // VerticalGap.xl,
               // _buildDate(context, formDataNotifier),
               VerticalGap.xl,
               if (totalDebt != null)
                 buildTotalAmount(context, dueDebt, 'الدين المستحق', bgColor: infoBgColor),
-              VerticalGap.m,
+              VerticalGap.l,
               if (totalDebt != null)
                 buildTotalAmount(context, totalDebt, 'الدين الكلي', bgColor: infoBgColor),
-              VerticalGap.m,
+              VerticalGap.l,
               if (latestReceiptDate != null)
                 buildTotalAmount(context, latestInvoiceDate, 'اخر قائمة', bgColor: infoBgColor),
-              VerticalGap.m,
+              VerticalGap.l,
               if (latestInvoiceDate != null)
                 buildTotalAmount(context, latestReceiptDate, 'اخر تسديد', bgColor: infoBgColor),
-              VerticalGap.xl,
+              VerticalGap.xxl,
               _buildButtons(context, formDataNotifier),
             ],
           ),

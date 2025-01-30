@@ -36,33 +36,36 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
 
     return MainFrame(
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          width: 400,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              VerticalGap.xl,
-              buildScreenTitle(context, 'قائمة بيع'),
-              VerticalGap.xxl,
-              _buildNameSelection(context, formDataNotifier),
-              // VerticalGap.xl,
-              // _buildDate(context, formDataNotifier),
-              VerticalGap.xl,
-              if (totalDebt != null)
-                buildTotalAmount(context, dueDebt, 'الدين المستحق', bgColor: infoBgColor),
-              VerticalGap.l,
-              if (totalDebt != null)
-                buildTotalAmount(context, totalDebt, 'الدين الكلي', bgColor: infoBgColor),
-              VerticalGap.l,
-              if (latestReceiptDate != null)
-                buildTotalAmount(context, latestInvoiceDate, 'اخر قائمة', bgColor: infoBgColor),
-              VerticalGap.l,
-              if (latestInvoiceDate != null)
-                buildTotalAmount(context, latestReceiptDate, 'اخر تسديد', bgColor: infoBgColor),
-              VerticalGap.xxl,
-              _buildButtons(context, formDataNotifier),
-            ],
+        child: SingleChildScrollView(
+          // Wrap the Column with SingleChildScrollView
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            width: 400,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildScreenTitle(context, 'قائمة بيع'),
+                VerticalGap.xxl,
+                _buildNameSelection(context, formDataNotifier),
+                VerticalGap.xxl,
+
+                // _buildDate(context, formDataNotifier),
+                // VerticalGap.xl,
+                if (totalDebt != null)
+                  buildTotalAmount(context, dueDebt, 'الدين المستحق', bgColor: infoBgColor),
+                VerticalGap.l,
+                if (totalDebt != null)
+                  buildTotalAmount(context, totalDebt, 'الدين الكلي', bgColor: infoBgColor),
+                VerticalGap.l,
+                if (latestReceiptDate != null)
+                  buildTotalAmount(context, latestInvoiceDate, 'اخر قائمة', bgColor: infoBgColor),
+                VerticalGap.l,
+                if (latestInvoiceDate != null)
+                  buildTotalAmount(context, latestReceiptDate, 'اخر تسديد', bgColor: infoBgColor),
+                VerticalGap.xxl,
+                _buildButtons(context, formDataNotifier),
+              ],
+            ),
           ),
         ),
       ),

@@ -42,11 +42,11 @@ class _AddItemState extends ConsumerState<AddItem> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              VerticalGap.l,
+              VerticalGap.m,
               _buildTitle(),
-              VerticalGap.xl,
+              VerticalGap.l,
               _buildImageSlider(),
-              VerticalGap.xl,
+              VerticalGap.l,
               _buildPrice(),
               VerticalGap.m,
               _buildQuantity(),
@@ -54,7 +54,7 @@ class _AddItemState extends ConsumerState<AddItem> {
               _buildGift(),
               VerticalGap.m,
               _buildButtons(context, ref),
-              VerticalGap.l,
+              VerticalGap.m,
             ],
           ),
         ),

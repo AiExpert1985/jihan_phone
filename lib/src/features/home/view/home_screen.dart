@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/features/home/controller/last_access_provider.dart';
@@ -67,6 +68,12 @@ class ButtonContainer extends ConsumerWidget {
       onTap: () async {
         onLoading(true); // Set loading to true
         await loadData(context, ref);
+        if (!_isAllDataLoaded(ref)) {
+          if (context.mounted) {
+            failureUserMessage(context, 'لم يتم مزامنة البيانات بصورة كاملة');
+          }
+          return;
+        }
         final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
         final formDataNotifier = ref.read(formDataContainerProvider.notifier);
         formDataNotifier.reset();
@@ -98,6 +105,21 @@ class ButtonContainer extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// ensure all database (transactions, customers, products) loaded before proceeding
+/// if any of the dbCaches is empty, it returns false, otherwise it returns true
+bool _isAllDataLoaded(WidgetRef ref) {
+  bool isAllDataLoaded = true;
+  final transactionsDbCache = ref.read(transactionDbCacheProvider.notifier);
+  final productsDbCache = ref.read(productsDbCacheProvider.notifier);
+  final customersDbCache = ref.read(salesmanCustomerDbCacheProvider.notifier);
+  if (transactionsDbCache.data.isEmpty ||
+      productsDbCache.data.isEmpty ||
+      customersDbCache.data.isEmpty) {
+    isAllDataLoaded = false;
+  }
+  return isAllDataLoaded;
 }
 
 // unlike products, we set customers ones

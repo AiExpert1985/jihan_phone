@@ -38,23 +38,25 @@ class _AddItemState extends ConsumerState<AddItem> {
       includeBottomNavigation: true,
       child: Container(
         padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            VerticalGap.l,
-            _buildTitle(),
-            VerticalGap.xl,
-            _buildImageSlider(),
-            VerticalGap.xl,
-            _buildPrice(),
-            VerticalGap.m,
-            _buildQuantity(),
-            VerticalGap.m,
-            _buildGift(),
-            VerticalGap.m,
-            _buildButtons(context, ref),
-            VerticalGap.l,
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              VerticalGap.l,
+              _buildTitle(),
+              VerticalGap.xl,
+              _buildImageSlider(),
+              VerticalGap.xl,
+              _buildPrice(),
+              VerticalGap.m,
+              _buildQuantity(),
+              VerticalGap.m,
+              _buildGift(),
+              VerticalGap.m,
+              _buildButtons(context, ref),
+              VerticalGap.l,
+            ],
+          ),
         ),
       ),
     );

@@ -44,10 +44,11 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                VerticalGap.xl,
                 buildScreenTitle(context, 'قائمة بيع'),
-                VerticalGap.xxl,
+                VerticalGap.xl,
                 _buildNameSelection(context, formDataNotifier),
-                VerticalGap.xxl,
+                VerticalGap.xl,
 
                 // _buildDate(context, formDataNotifier),
                 // VerticalGap.xl,
@@ -62,7 +63,7 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
                 VerticalGap.l,
                 if (latestInvoiceDate != null)
                   buildTotalAmount(context, latestReceiptDate, 'اخر تسديد', bgColor: infoBgColor),
-                VerticalGap.xxl,
+                VerticalGap.xl,
                 _buildButtons(context, formDataNotifier),
               ],
             ),
@@ -140,7 +141,7 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
                 cartNotifier.reset();
                 GoRouter.of(context).pushNamed(AppRoute.items.name);
               } else {
-                failureUserMessage(context, 'يرجى ملئ جميع الحقول بصورة صحيحة');
+                failureUserMessage(context, 'يرجى اختيار اسم الزبون');
               }
             },
           ),

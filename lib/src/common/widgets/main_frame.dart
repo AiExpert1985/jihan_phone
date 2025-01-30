@@ -37,7 +37,7 @@ class MainFrame extends ConsumerWidget {
     return BottomNavigationBar(
       onTap: (index) {
         if (index == 0 && formData['name'] == null) {
-          failureUserMessage(context, 'تأكد من ملى حقول القائمة اولا');
+          failureUserMessage(context, 'لا يوجد قائمة مبيعات');
         } else if (index == 0 && GoRouter.of(context).state.path != '/cart') {
           GoRouter.of(context).goNamed(AppRoute.cart.name);
         } else if (index == 1 && GoRouter.of(context).state.path != '/home') {

@@ -41,7 +41,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 50),
             ButtonContainer('قائمة بيع', AppRoute.invoice.name, onLoading: _setLoading),
             VerticalGap.xxl,
-            if (_isLoading) const CircularProgressIndicator()
+            if (_isLoading)
+              const Column(
+                children: [
+                  CircularProgressIndicator(),
+                  VerticalGap.xl,
+                  Text('مزامنة البيانات', style: TextStyle(color: Colors.white, fontSize: 14))
+                ],
+              )
           ],
         ),
       ),

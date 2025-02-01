@@ -13,7 +13,7 @@ import 'package:tablets/src/routers/go_router_provider.dart';
 // these colors are taken from Omar caffee mobile web app, given by Mahmood
 const bgColor = Color(0xFF573419);
 const itemsColor = Color(0xFF9C551F);
-const mainFrameIconsColor = Colors.white;
+const mainFrameIconsColor = Color.fromARGB(255, 233, 219, 90);
 const double mainIconSize = 25;
 const double iconNameFontSize = 18;
 // const mainFrameIconsColor = Color.fromARGB(103, 255, 235, 59);

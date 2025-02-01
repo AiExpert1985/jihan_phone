@@ -3,15 +3,16 @@ import 'package:tablets/src/common/functions/utils.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
 
 class StyledTotalText extends StatelessWidget {
-  const StyledTotalText(this.text, {super.key});
+  const StyledTotalText(this.text, this.fontColor, {super.key});
   final String text;
+  final Color fontColor;
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
-        color: Colors.yellow,
+      style: TextStyle(
+        color: fontColor,
         fontSize: 20,
       ),
     );
@@ -37,7 +38,7 @@ class FormFieldLabel extends StatelessWidget {
 }
 
 Widget buildTotalAmount(BuildContext context, dynamic amount, String label,
-    {Color bgColor = itemsColor}) {
+    {Color bgColor = itemsColor, Color fontColor = Colors.yellow}) {
   return Container(
     height: 50,
     width: 350,
@@ -45,10 +46,10 @@ Widget buildTotalAmount(BuildContext context, dynamic amount, String label,
     decoration:
         BoxDecoration(color: bgColor, borderRadius: const BorderRadius.all(Radius.circular(6))),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-      StyledTotalText(label),
+      StyledTotalText(label, fontColor),
       amount is DateTime
-          ? StyledTotalText(formatDate(amount))
-          : StyledTotalText(doubleToStringWithComma(amount)),
+          ? StyledTotalText(formatDate(amount), fontColor)
+          : StyledTotalText(doubleToStringWithComma(amount), fontColor),
     ]),
   );
 }

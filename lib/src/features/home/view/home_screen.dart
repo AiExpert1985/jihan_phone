@@ -4,10 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:tablets/src/common/functions/loading_data.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/values/gaps.dart';
+import 'package:tablets/src/common/widgets/loading_spinner.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
+import 'package:tablets/src/features/transactions/controllers/transaction_db_cache_provider.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
 import 'package:tablets/src/features/transactions/common/common_widgets.dart';
 import 'package:tablets/src/common/forms/drop_down_with_search.dart';
@@ -55,9 +57,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               if (customerDbCache.data.isNotEmpty) _buildNameSelection(context, formDataNotifier),
-              if (formDataNotifier.data.containsKey('name')) _buildDebtInfo(),
-              if (formDataNotifier.data.containsKey('name')) _buildSelectionButtons(),
-              if (_isLoading || customerDbCache.data.isEmpty) _buildLoadingIndicator()
+              if (!_isLoading && formDataNotifier.data.containsKey('name')) _buildDebtInfo(),
+              if (!_isLoading && formDataNotifier.data.containsKey('name'))
+                _buildSelectionButtons(),
+              if (_isLoading || customerDbCache.data.isEmpty) const LoadingSpinner()
             ],
           ),
         ),
@@ -70,36 +73,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       children: [
         if (totalDebt != null)
-          buildTotalAmount(context, dueDebt, 'الدين المستحق', bgColor: infoBgColor),
+          buildTotalAmount(context, dueDebt, 'الدين المستحق',
+              bgColor: infoBgColor, fontColor: Colors.white),
         VerticalGap.l,
         if (totalDebt != null)
-          buildTotalAmount(context, totalDebt, 'الدين الكلي', bgColor: infoBgColor),
+          buildTotalAmount(context, totalDebt, 'الدين الكلي',
+              bgColor: infoBgColor, fontColor: Colors.white),
         VerticalGap.l,
         if (latestReceiptDate != null)
-          buildTotalAmount(context, latestInvoiceDate, 'اخر قائمة', bgColor: infoBgColor),
+          buildTotalAmount(context, latestInvoiceDate, 'اخر قائمة',
+              bgColor: infoBgColor, fontColor: Colors.white),
         VerticalGap.l,
         if (latestInvoiceDate != null)
-          buildTotalAmount(context, latestReceiptDate, 'اخر تسديد', bgColor: infoBgColor),
+          buildTotalAmount(context, latestReceiptDate, 'اخر تسديد',
+              bgColor: infoBgColor, fontColor: Colors.white),
       ],
     );
   }
 
-  Widget _buildLoadingIndicator() {
-    return const Column(children: [
-      CircularProgressIndicator(),
-      VerticalGap.xl,
-      Text('مزامنة البيانات', style: TextStyle(color: Colors.white, fontSize: 14))
-    ]);
-  }
-
   Widget _buildSelectionButtons() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildTransactionSelectionButton(context, 'وصل قبض', AppRoute.receipt.name),
-        const SizedBox(width: 50),
-        _buildTransactionSelectionButton(context, 'قائمة بيع', AppRoute.items.name,
-            loadAllTransactions: true),
+        _buildTransactionSelectionButton(context, 'قائمة بيع', AppRoute.items.name),
       ],
     );
   }
@@ -187,18 +184,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
-  Widget _buildTransactionSelectionButton(BuildContext context, String label, String routeName,
-      {bool loadAllTransactions = false}) {
+  Widget _buildTransactionSelectionButton(BuildContext context, String label, String routeName) {
     final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+    final transactionDbCache = ref.read(transactionDbCacheProvider.notifier);
 
     return InkWell(
       onTap: () async {
-        if (loadAllTransactions) {
-          // load all transaction if the button pressed is invoice, transactions used to calculate stock
-          await setTranasctionsProvider(ref);
-        }
         if (formDataNotifier.data.containsKey('name') &
             formDataNotifier.data.containsKey('nameDbRef')) {
+          // reseting transactions, becuase in invoice, we need whole transactions to calculate the stock
+          // I want to use empty transactionDbCache check to set loading indicator
+          transactionDbCache.set([]);
           if (context.mounted) {
             GoRouter.of(context).goNamed(routeName);
           }
@@ -207,7 +203,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       },
       child: Container(
-        width: 150,
+        width: 140,
         height: 100,
         decoration: BoxDecoration(
           border: Border.all(),

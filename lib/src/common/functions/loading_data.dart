@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tablets/src/common/functions/debug_print.dart';
 import 'package:tablets/src/features/home/controller/last_access_provider.dart';
 import 'package:tablets/src/features/home/controller/salesman_info_provider.dart';
 import 'package:tablets/src/features/login/repository/accounts_repository.dart';
@@ -64,8 +63,6 @@ Future<void> setTranasctionsProvider(WidgetRef ref) async {
   final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
   final oneDayPassed = lastAccessNotifier.hasOneDayPassed();
   if (transactionsDbCache.data.isEmpty || oneDayPassed) {
-    // tempPrint('one day has passed = $oneDayPassed');
-    // tempPrint('transactionDbCache length = ${transactionsDbCache.data.length}');
     final transactionRepository = ref.read(transactionRepositoryProvider);
     final transactions = await transactionRepository.fetchItemListAsMaps();
     transactionsDbCache.set(transactions);

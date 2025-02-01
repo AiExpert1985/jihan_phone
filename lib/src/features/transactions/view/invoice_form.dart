@@ -90,7 +90,7 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
               formDataNotifier.addProperty('nameDbRef', customer['dbRef']);
               formDataNotifier.addProperty('sellingPriceType', customer['sellingPriceType']);
               final customerDebtInfo =
-                  getCustomerDbetInfo(ref, customer['dbRef'], paymentDurationLimit);
+                  getCustomerDebtInfo(ref, customer['dbRef'], paymentDurationLimit);
               // set customer debt info
               totalDebt = customerDebtInfo['totalDebt'];
               dueDebt = customerDebtInfo['dueDebt'];
@@ -104,25 +104,6 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
       ],
     );
   }
-
-  // Widget _buildDate(BuildContext context, MapStateNotifier formDataNotifier) {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.center,
-  //     children: [
-  //       const FormFieldLabel('التاريخ'),
-  //       HorizontalGap.l,
-  //       Expanded(
-  //         child: FormDatePickerField(
-  //           initialValue: formDataNotifier.data['date'],
-  //           onChangedFn: (date) {
-  //             formDataNotifier.addProperty('date', date);
-  //           },
-  //           name: 'date',
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   Widget _buildButtons(BuildContext context, MapStateNotifier formDataNotifier) {
     final cartNotifier = ref.read(cartProvider.notifier);

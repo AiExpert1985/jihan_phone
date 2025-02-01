@@ -130,7 +130,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _setLoading(false);
               // now calculating debt
               final customerDebtInfo =
-                  getCustomerDbetInfo(ref, customer['dbRef'], paymentDurationLimit);
+                  getCustomerDebtInfo(ref, customer['dbRef'], paymentDurationLimit);
               // set customer debt info
               totalDebt = customerDebtInfo['totalDebt'];
               dueDebt = customerDebtInfo['dueDebt'];

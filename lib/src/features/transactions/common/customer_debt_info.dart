@@ -9,7 +9,7 @@ Map<String, dynamic> getCustomerDbetInfo(
   Map<String, dynamic> customerDebtInfo = {};
   final transactionsDbCache = ref.read(transactionDbCacheProvider.notifier);
   final transactions = transactionsDbCache.data;
-  final customerDbCache = ref.read(salesmanCustomerDbCacheProvider.notifier);
+  final customerDbCache = ref.read(customerDbCacheProvider.notifier);
   // first calculate the total debt
   final customerData = customerDbCache.getItemByDbRef(customerDbRef);
   final initialDebt = customerData['initialCredit'];

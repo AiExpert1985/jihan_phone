@@ -1,21 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tablets/src/common/functions/loading_data.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
-import 'package:tablets/src/features/home/controller/last_access_provider.dart';
-import 'package:tablets/src/features/home/controller/salesman_info_provider.dart';
-import 'package:tablets/src/features/login/repository/accounts_repository.dart';
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
-import 'package:tablets/src/features/transactions/controllers/products_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
-import 'package:tablets/src/features/transactions/controllers/transaction_db_cache_provider.dart';
-import 'package:tablets/src/features/transactions/repository/customer_repository_provider.dart';
-import 'package:tablets/src/features/transactions/repository/products_repository_provider.dart';
-import 'package:tablets/src/features/transactions/repository/transactions_repository_provider.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
 import 'package:tablets/src/features/transactions/common/common_widgets.dart';
 import 'package:tablets/src/common/forms/drop_down_with_search.dart';
@@ -37,9 +29,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isLoading = false; // Loading state
 
   @override
+  void initState() {
+    super.initState();
+    final customerDbCache = ref.read(customerDbCacheProvider.notifier);
+    if (customerDbCache.data.isEmpty) {
+      _setLoading(true); // Set loading to true
+      setCustomersProvider(ref);
+      _setLoading(false); // Set loading to false after data is loaded
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     ref.watch(formDataContainerProvider);
+    ref.watch(customerDbCacheProvider);
     final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+    final customerDbCache = ref.read(customerDbCacheProvider.notifier);
 
     return MainFrame(
       child: Center(
@@ -49,10 +54,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNameSelection(context, formDataNotifier),
+              if (customerDbCache.data.isNotEmpty) _buildNameSelection(context, formDataNotifier),
               if (formDataNotifier.data.containsKey('name')) _buildDebtInfo(),
               if (formDataNotifier.data.containsKey('name')) _buildSelectionButtons(),
-              if (_isLoading) _buildLoadingIndicator()
+              if (_isLoading || customerDbCache.data.isEmpty) _buildLoadingIndicator()
             ],
           ),
         ),
@@ -91,15 +96,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        TransactionSelectionButton('وصل قبض', AppRoute.receipt.name),
+        _buildTransactionSelectionButton(context, 'وصل قبض', AppRoute.receipt.name),
         const SizedBox(width: 50),
-        TransactionSelectionButton('قائمة بيع', AppRoute.items.name),
+        _buildTransactionSelectionButton(context, 'قائمة بيع', AppRoute.items.name,
+            loadAllTransactions: true),
       ],
     );
   }
 
   Widget _buildNameSelection(BuildContext context, MapStateNotifier formDataNotifier) {
-    final salesmanCustomersDb = ref.read(salesmanCustomerDbCacheProvider.notifier);
+    final salesmanCustomersDb = ref.read(customerDbCacheProvider.notifier);
     final formDataNotifier = ref.read(formDataContainerProvider.notifier);
     final cartNotifier = ref.read(cartProvider.notifier);
 
@@ -111,7 +117,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Expanded(
           child: DropDownWithSearch(
             initialValue: formDataNotifier.data['name'],
-            onChangedFn: (customer) {
+            onChangedFn: (customer) async {
               // we reset form data because customer has been changed
               formDataNotifier.reset();
               // we also reset cart context
@@ -121,6 +127,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               formDataNotifier.addProperty('name', customer['name']);
               formDataNotifier.addProperty('nameDbRef', customer['dbRef']);
               formDataNotifier.addProperty('sellingPriceType', customer['sellingPriceType']);
+              // load transactions of selected customer, to be used for calculating debt
+              _setLoading(true);
+              await setTranasctionsProvider(ref, customerDbRef: customer['dbRef']);
+              _setLoading(false);
+              // now calculating debt
               final customerDebtInfo =
                   getCustomerDbetInfo(ref, customer['dbRef'], paymentDurationLimit);
               // set customer debt info
@@ -134,7 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         HorizontalGap.l,
-        DataRefreshButton(_setLoading),
+        _buildLoadCustomersButton(),
       ],
     );
   }
@@ -149,14 +160,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
     if (totalDebt! >= creditLimit) {
       isValidUser = false;
-      // failureUserMessage(context, 'زبون متجاوز لحدود الدين');
       return;
     }
     if (dueDebt! > 0) {
       isValidUser = false;
-      // failureUserMessage(context, 'زبون تجاوز مدة التسديد المسموحة');
       return;
     }
+  }
+
+  Widget _buildLoadCustomersButton() {
+    return IconButton(
+        onPressed: () async {
+          _setLoading(true); // Set loading to true
+          await setCustomersProvider(ref);
+          _setLoading(false); // Set loading to false after data is loaded
+        },
+        icon: const Icon(
+          Icons.refresh,
+          color: Colors.white,
+        ));
   }
 
   void _setLoading(bool loading) {
@@ -164,20 +186,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _isLoading = loading; // Update loading state
     });
   }
-}
 
-class TransactionSelectionButton extends ConsumerWidget {
-  const TransactionSelectionButton(this.label, this.routeName, {super.key});
-
-  final String label;
-  final String routeName;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget _buildTransactionSelectionButton(BuildContext context, String label, String routeName,
+      {bool loadAllTransactions = false}) {
     final formDataNotifier = ref.read(formDataContainerProvider.notifier);
 
     return InkWell(
       onTap: () async {
+        if (loadAllTransactions) {
+          // load all transaction if the button pressed is invoice, transactions used to calculate stock
+          await setTranasctionsProvider(ref);
+        }
         if (formDataNotifier.data.containsKey('name') &
             formDataNotifier.data.containsKey('nameDbRef')) {
           if (context.mounted) {
@@ -204,104 +223,5 @@ class TransactionSelectionButton extends ConsumerWidget {
         ),
       ),
     );
-  }
-}
-
-class DataRefreshButton extends ConsumerWidget {
-  const DataRefreshButton(this.onLoading, {super.key});
-
-  final Function(bool) onLoading; // Callback to set loading state
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
-    return IconButton(
-        onPressed: () async {
-          onLoading(true); // Set loading to true
-          await loadData(context, ref);
-          if (!_isAllDataLoaded(ref)) {
-            if (context.mounted) {
-              failureUserMessage(context, 'لم يتم مزامنة البيانات بصورة كاملة');
-            }
-            return;
-          }
-          // set access date to now
-          lastAccessNotifier.setLastAccessDate();
-          onLoading(false); // Set loading to false after data is loaded
-        },
-        icon: const Icon(
-          Icons.refresh,
-          color: Colors.white,
-        ));
-  }
-}
-
-/// ensure all database (transactions, customers, products) loaded before proceeding
-/// if any of the dbCaches is empty, it returns false, otherwise it returns true
-bool _isAllDataLoaded(WidgetRef ref) {
-  bool isAllDataLoaded = true;
-  final transactionsDbCache = ref.read(transactionDbCacheProvider.notifier);
-  final productsDbCache = ref.read(productsDbCacheProvider.notifier);
-  final customersDbCache = ref.read(salesmanCustomerDbCacheProvider.notifier);
-  if (transactionsDbCache.data.isEmpty ||
-      productsDbCache.data.isEmpty ||
-      customersDbCache.data.isEmpty) {
-    isAllDataLoaded = false;
-  }
-  return isAllDataLoaded;
-}
-
-// unlike products, we set customers ones
-Future<void> setSalesmanCustomersProvider(WidgetRef ref) async {
-  final salesmanInfoNotifier = ref.read(salesmanInfoProvider.notifier);
-  final email = FirebaseAuth.instance.currentUser!.email;
-  final repository = ref.read(accountsRepositoryProvider);
-  final accounts = await repository.fetchItemListAsMaps();
-  var matchingAccounts = accounts.where((account) => account['email'] == email);
-  if (matchingAccounts.isNotEmpty) {
-    final dbRef = matchingAccounts.first['dbRef'];
-    salesmanInfoNotifier.setDbRef(dbRef);
-    final name = matchingAccounts.first['name'];
-    salesmanInfoNotifier.setName(name);
-  }
-  final salesmanDbRef = salesmanInfoNotifier.dbRef;
-  final customersRepository = ref.read(customerRepositoryProvider);
-  final customers = await customersRepository.fetchItemListAsMaps();
-  final salesmanCustomers = customers.where((customer) {
-    return customer['salesmanDbRef'] == salesmanDbRef;
-  }).toList();
-  final salesmanCustomersDb = ref.read(salesmanCustomerDbCacheProvider.notifier);
-  salesmanCustomersDb.set(salesmanCustomers);
-}
-
-// with each transaction, we get fresh copy of whole products, and set the filtered products to all
-// products, so that they can be filtered later
-Future<void> setProductsProvider(WidgetRef ref) async {
-  final productsRepository = ref.read(productsRepositoryProvider);
-  final products = await productsRepository.fetchItemListAsMaps();
-  final dbCache = ref.read(productsDbCacheProvider.notifier);
-  dbCache.set(products);
-}
-
-Future<void> setTranasctionsProvider(WidgetRef ref) async {
-  final transactionRepository = ref.read(transactionRepositoryProvider);
-  final transactions = await transactionRepository.fetchItemListAsMaps();
-  final transactionsDbCache = ref.read(transactionDbCacheProvider.notifier);
-  transactionsDbCache.set(transactions);
-}
-
-Future<void> loadData(BuildContext context, WidgetRef ref) async {
-  final customerDbCache = ref.read(salesmanCustomerDbCacheProvider.notifier);
-  final transactionDbCache = ref.read(transactionDbCacheProvider.notifier);
-  final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
-  await setProductsProvider(ref);
-  // I update customers and transactions once perday for salesman, to avoid firebase expenses of loading
-  // the data with each transaction
-  final oneDayPassed = lastAccessNotifier.hasOneDayPassed();
-  if (customerDbCache.data.isEmpty || oneDayPassed) {
-    await setSalesmanCustomersProvider(ref);
-  }
-  if (transactionDbCache.data.isEmpty || oneDayPassed) {
-    await setTranasctionsProvider(ref);
   }
 }

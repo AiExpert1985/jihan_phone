@@ -74,7 +74,7 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
   }
 
   Widget _buildNameSelection(BuildContext context, MapStateNotifier formDataNotifier) {
-    final salesmanCustomersDb = ref.read(salesmanCustomerDbCacheProvider.notifier);
+    final salesmanCustomersDb = ref.read(customerDbCacheProvider.notifier);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

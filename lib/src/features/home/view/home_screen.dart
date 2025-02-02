@@ -109,10 +109,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const FormFieldLabel('الزبون'),
-        HorizontalGap.l,
+        // const FormFieldLabel('الزبون'),
+        // HorizontalGap.l,
         Expanded(
           child: DropDownWithSearch(
+            label: 'الزبون',
             initialValue: formDataNotifier.data['name'],
             onChangedFn: (customer) async {
               // we reset form data because customer has been changed

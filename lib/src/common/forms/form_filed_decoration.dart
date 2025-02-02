@@ -7,10 +7,9 @@ InputDecoration formFieldDecoration({String? label, bool hideBorders = false}) {
         ? null
         : Text(
             label,
-            // textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,
-              color: Colors.black87,
+              color: Colors.white,
             ),
           ),
     alignLabelWithHint: true,

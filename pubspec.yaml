@@ -52,6 +52,7 @@ dependencies:
   connectivity_plus: ^6.1.0
   flutter_multi_formatter: ^2.13.0
   transparent_image: ^2.0.1
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:
@@ -110,3 +111,8 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 flutter_intl:
   enabled: true
+  
+# for changing app icon
+flutter_icons:
+  android: true
+  image_path: "assets/icons/app_icon/logo.png"

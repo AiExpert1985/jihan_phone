@@ -177,7 +177,7 @@ class ShoppingCart extends ConsumerWidget {
     return InkWell(
       onTap: () => GoRouter.of(context).goNamed(AppRoute.home.name),
       child: Container(
-        width: 250,
+        width: 300,
         padding: const EdgeInsets.all(10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

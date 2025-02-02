@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tablets/src/common/functions/debug_print.dart';
+import 'package:tablets/src/features/home/controller/last_access_provider.dart';
 import 'package:tablets/src/features/home/controller/salesman_info_provider.dart';
 import 'package:tablets/src/features/login/repository/accounts_repository.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
@@ -36,21 +38,37 @@ Future<void> setProductsProvider(WidgetRef ref) async {
   dbCache.set(products);
 }
 
-// if customer dbRef is provided, we only load transactions for the customer
-// when we want to calculate product quantity, we need all transactions
-// I separated them, to make it easier to load at begining of the app
-// given the idea that we may need to just calculate the debt of customer
-// not creating new invoice, so in this case we don't need to load all transactions
-Future<void> setTranasctionsProvider(WidgetRef ref, {String? customerDbRef}) async {
-  final transactionRepository = ref.read(transactionRepositoryProvider);
-  final List<Map<String, dynamic>> transactions;
-  if (customerDbRef != null) {
-    transactions = await transactionRepository.fetchItemListAsMaps(
-        filterKey: 'nameDbRef', filterValue: customerDbRef);
-  } else {
-    transactions = await transactionRepository.fetchItemListAsMaps(
-        filterKey: 'nameDbRef', filterValue: customerDbRef);
-  }
+// // if customer dbRef is provided, we only load transactions for the customer
+// // when we want to calculate product quantity, we need all transactions
+// // I separated them, to make it easier to load at begining of the app
+// // given the idea that we may need to just calculate the debt of customer
+// // not creating new invoice, so in this case we don't need to load all transactions
+// Future<void> setTranasctionsProvider(WidgetRef ref, {String? customerDbRef}) async {
+//   final transactionRepository = ref.read(transactionRepositoryProvider);
+//   final List<Map<String, dynamic>> transactions;
+//   if (customerDbRef != null) {
+//     transactions = await transactionRepository.fetchItemListAsMaps(
+//         filterKey: 'nameDbRef', filterValue: customerDbRef);
+//   } else {
+//     transactions = await transactionRepository.fetchItemListAsMaps(
+//         filterKey: 'nameDbRef', filterValue: customerDbRef);
+//   }
+//   final transactionsDbCache = ref.read(transactionDbCacheProvider.notifier);
+//   transactionsDbCache.set(transactions);
+// }
+
+// we keep a copy of transaction data, because it is expensive in loading (about 1000 document)
+// which makes loading slow, and cost money in firebase, I update the cache once a day
+Future<void> setTranasctionsProvider(WidgetRef ref) async {
   final transactionsDbCache = ref.read(transactionDbCacheProvider.notifier);
-  transactionsDbCache.set(transactions);
+  final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
+  final oneDayPassed = lastAccessNotifier.hasOneDayPassed();
+  if (transactionsDbCache.data.isEmpty || oneDayPassed) {
+    // tempPrint('one day has passed = $oneDayPassed');
+    // tempPrint('transactionDbCache length = ${transactionsDbCache.data.length}');
+    final transactionRepository = ref.read(transactionRepositoryProvider);
+    final transactions = await transactionRepository.fetchItemListAsMaps();
+    transactionsDbCache.set(transactions);
+    lastAccessNotifier.setLastAccessDate();
+  }
 }

@@ -36,7 +36,6 @@ class _ItemsGridState extends ConsumerState<ItemsGrid> {
   @override
   void initState() {
     super.initState();
-    setTranasctionsProvider(ref);
     setProductsProvider(ref);
   }
 
@@ -45,15 +44,16 @@ class _ItemsGridState extends ConsumerState<ItemsGrid> {
     ref.watch(transactionRepositoryProvider);
     ref.watch(productsDbCacheProvider);
     final productDbCache = ref.read(productsDbCacheProvider.notifier);
-    final transactonDbCache = ref.read(transactionDbCacheProvider.notifier);
 
-    Widget childWidget = productDbCache.data.isEmpty || transactonDbCache.data.isEmpty
-        ? const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Center(child: LoadingSpinner()),
-            ],
+    Widget childWidget = productDbCache.data.isEmpty
+        ? const Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                LoadingSpinner(),
+              ],
+            ),
           )
         : _buildProductsGrid();
     return MainFrame(

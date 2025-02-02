@@ -9,7 +9,6 @@ import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
-import 'package:tablets/src/features/transactions/controllers/transaction_db_cache_provider.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
 import 'package:tablets/src/features/transactions/common/common_widgets.dart';
 import 'package:tablets/src/common/forms/drop_down_with_search.dart';
@@ -126,7 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               formDataNotifier.addProperty('sellingPriceType', customer['sellingPriceType']);
               // load transactions of selected customer, to be used for calculating debt
               _setLoading(true);
-              await setTranasctionsProvider(ref, customerDbRef: customer['dbRef']);
+              await setTranasctionsProvider(ref);
               _setLoading(false);
               // now calculating debt
               final customerDebtInfo =
@@ -186,15 +185,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildTransactionSelectionButton(BuildContext context, String label, String routeName) {
     final formDataNotifier = ref.read(formDataContainerProvider.notifier);
-    final transactionDbCache = ref.read(transactionDbCacheProvider.notifier);
 
     return InkWell(
       onTap: () async {
         if (formDataNotifier.data.containsKey('name') &
             formDataNotifier.data.containsKey('nameDbRef')) {
-          // reseting transactions, becuase in invoice, we need whole transactions to calculate the stock
-          // I want to use empty transactionDbCache check to set loading indicator
-          transactionDbCache.set([]);
           if (context.mounted) {
             GoRouter.of(context).goNamed(routeName);
           }

@@ -168,8 +168,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildLoadCustomersButton() {
     return IconButton(
         onPressed: () async {
+          // first reset both formData, and cart
+          final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+          final cartNotifier = ref.read(cartProvider.notifier);
+          formDataNotifier.reset();
+          cartNotifier.reset();
+          // then start loading data
           _setLoading(true); // Set loading to true
-          await setCustomersProvider(ref);
+          // await setCustomersProvider(ref);
+          await setTranasctionsProvider(ref, loadFreshData: true); // load fresh copy of transations
           _setLoading(false); // Set loading to false after data is loaded
         },
         icon: const Icon(

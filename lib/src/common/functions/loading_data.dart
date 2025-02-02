@@ -58,11 +58,13 @@ Future<void> setProductsProvider(WidgetRef ref) async {
 
 // we keep a copy of transaction data, because it is expensive in loading (about 1000 document)
 // which makes loading slow, and cost money in firebase, I update the cache once a day
-Future<void> setTranasctionsProvider(WidgetRef ref) async {
+// loadingFreshData is used for refresh button, which salesman might need if the customer data where updated
+// during the day, because in our app, the data is only updated onces a day at the first app access
+Future<void> setTranasctionsProvider(WidgetRef ref, {bool loadFreshData = false}) async {
   final transactionsDbCache = ref.read(transactionDbCacheProvider.notifier);
   final lastAccessNotifier = ref.read(lastAccessProvider.notifier);
   final oneDayPassed = lastAccessNotifier.hasOneDayPassed();
-  if (transactionsDbCache.data.isEmpty || oneDayPassed) {
+  if (transactionsDbCache.data.isEmpty || oneDayPassed || loadFreshData) {
     final transactionRepository = ref.read(transactionRepositoryProvider);
     final transactions = await transactionRepository.fetchItemListAsMaps();
     transactionsDbCache.set(transactions);

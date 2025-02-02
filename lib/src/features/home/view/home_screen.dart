@@ -59,7 +59,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               if (!_isLoading && formDataNotifier.data.containsKey('name')) _buildDebtInfo(),
               if (!_isLoading && formDataNotifier.data.containsKey('name'))
                 _buildSelectionButtons(),
-              if (_isLoading || customerDbCache.data.isEmpty) const LoadingSpinner()
+              if (_isLoading || customerDbCache.data.isEmpty)
+                const LoadingSpinner('تحميل بيانات الزبائن')
             ],
           ),
         ),

@@ -47,13 +47,7 @@ class _ItemsGridState extends ConsumerState<ItemsGrid> {
 
     Widget childWidget = productDbCache.data.isEmpty
         ? const Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                LoadingSpinner(),
-              ],
-            ),
+            child: LoadingSpinner('تحميل بيانات المواد'),
           )
         : _buildProductsGrid();
     return MainFrame(

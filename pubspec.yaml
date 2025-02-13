@@ -53,6 +53,7 @@ dependencies:
   flutter_multi_formatter: ^2.13.0
   transparent_image: ^2.0.1
   flutter_launcher_icons: ^0.14.3
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:

@@ -2,6 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tablets/src/features/about/about.dart';
+import 'package:tablets/src/features/daily_transactions/view/previous_invoices.dart';
+import 'package:tablets/src/features/daily_transactions/view/previous_receipts.dart';
 import 'package:tablets/src/features/home/view/home_screen.dart';
 import 'package:tablets/src/features/login/view/login_screen.dart';
 import 'package:tablets/src/features/transactions/model/item.dart';
@@ -13,7 +16,7 @@ import 'package:tablets/src/routers/go_router_refresh_stream.dart';
 
 import 'package:tablets/src/routers/not_found_screen.dart';
 
-enum AppRoute { home, login, receipt, items, add, cart }
+enum AppRoute { home, login, receipt, items, add, cart, about, pendingInvoices, pendingReceipts }
 
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
 
@@ -73,6 +76,27 @@ final goRouterProvider = Provider<GoRouter>(
           path: '/cart',
           name: AppRoute.cart.name,
           builder: (BuildContext context, GoRouterState state) => const ShoppingCart(),
+        ),
+        GoRoute(
+          path: '/about',
+          name: AppRoute.about.name,
+          builder: (BuildContext context, GoRouterState state) => const AboutScreen(),
+        ),
+        GoRoute(
+          path: '/pendingInvoices',
+          name: AppRoute.pendingInvoices.name,
+          builder: (BuildContext context, GoRouterState state) {
+            // final List<Map<String, dynamic>> pendingInvoices =
+            //     state.extra as List<Map<String, dynamic>>;
+            return const PreviousInvoices();
+          },
+        ),
+        GoRoute(
+          path: '/pendingReceipts',
+          name: AppRoute.pendingReceipts.name,
+          builder: (BuildContext context, GoRouterState state) {
+            return const PreviousReceipts();
+          },
         ),
       ],
       errorBuilder: (context, state) => const NotFoundScreen(),

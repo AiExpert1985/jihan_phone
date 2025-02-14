@@ -5,8 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:tablets/generated/l10n.dart';
 import 'package:tablets/src/common/functions/debug_print.dart';
 import 'package:tablets/src/common/functions/dialog_delete_confirmation.dart';
-import 'package:tablets/src/common/functions/user_messages.dart';
-import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
+import 'package:tablets/src/common/providers/data_loading_provider.dart';
+import 'package:tablets/src/common/providers/salesman_info_provider.dart';
+import 'package:tablets/src/common/widgets/main_drawer.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
 
@@ -16,6 +17,22 @@ const itemsColor = Color(0xFF9C551F);
 const mainFrameIconsColor = Color.fromARGB(255, 233, 219, 90);
 const double mainIconSize = 25;
 const double iconNameFontSize = 18;
+const bgColorGradient = LinearGradient(
+  begin: Alignment.topRight,
+  end: Alignment.bottomLeft,
+  colors: [
+    Color(0xFF573419),
+    Color.fromARGB(255, 116, 74, 42),
+  ],
+);
+const itemColorGradient = LinearGradient(
+  begin: Alignment.topRight,
+  end: Alignment.bottomLeft,
+  colors: [
+    Color(0xFF9C551F),
+    Color.fromARGB(255, 163, 94, 41),
+  ],
+);
 // const mainFrameIconsColor = Color.fromARGB(103, 255, 235, 59);
 
 class MainFrame extends ConsumerWidget {
@@ -26,45 +43,64 @@ class MainFrame extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(dataLoadingController);
     return Scaffold(
-      appBar: customAppBar(context),
-      body: Container(color: bgColor, child: child),
+      appBar: AppBar(
+        backgroundColor: itemsColor,
+        // change color of drawer and back Icons
+        foregroundColor: mainFrameIconsColor,
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Container(
+              decoration: const BoxDecoration(gradient: bgColorGradient),
+              child: LoadingWrapper(
+                  child: Container(padding: const EdgeInsets.all(30.0), child: child)),
+            ),
+          ),
+        ],
+      ),
+      endDrawer: const MainDrawer(),
       bottomNavigationBar: includeBottomNavigation ? _buildBottomNavigation(context, ref) : null,
     );
   }
 
   Widget _buildBottomNavigation(BuildContext context, WidgetRef ref) {
-    final formDataNotifier = ref.read(formDataContainerProvider.notifier);
-    final cartNotifier = ref.read(cartProvider.notifier);
+    final formData = ref.watch(formDataContainerProvider);
     return BottomNavigationBar(
       onTap: (index) async {
-        if (index == 0 && formDataNotifier.data['name'] == null) {
-          failureUserMessage(context, 'لا يوجد قائمة مبيعات');
-        } else if (index == 0 && GoRouter.of(context).state.path != '/cart') {
-          GoRouter.of(context).goNamed(AppRoute.cart.name);
-        } else if (index == 1 && GoRouter.of(context).state.path != '/home') {
-          // when back to home, all data is erased, user receives confirmation
-          final confiramtion = await showDeleteConfirmationDialog(
-              context: context,
-              messagePart1: "",
-              messagePart2: 'سوف يتم حذف القائمة عند العودة للواجهة الرئيسية');
-          if (confiramtion != null) {
-            formDataNotifier.reset();
-            cartNotifier.reset();
-            if (context.mounted) {
-              GoRouter.of(context).goNamed(AppRoute.home.name);
+        // make sure salesman info is loaded
+        final salesmanInfo = ref.read(salesmanInfoProvider);
+        if (salesmanInfo.name == null || salesmanInfo.dbRef == null) {
+          ref.read(dataLoadingController.notifier).loadSalesmanInfo();
+        }
+        switch (index) {
+          case 0:
+            if (GoRouter.of(context).state.path != '/home') {
+              ref.read(dataLoadingController.notifier).loadCustomers();
+              GoRouter.of(context).pushNamed(AppRoute.home.name);
             }
-          }
-        } else {
-          errorPrint('Error or repeated URI');
+            break;
+
+          case 1:
+            if (GoRouter.of(context).state.path != '/cart' && formData['name'] != null) {
+              GoRouter.of(context).pushNamed(AppRoute.cart.name);
+            }
+            break;
+
+          default:
+            errorPrint('Error or repeated URI');
+            break;
         }
       },
       items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
         BottomNavigationBarItem(
           icon: Icon(Icons.shopping_cart),
           label: 'المشتريات',
         ), // Cart Icon
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'الرئيسية'),
       ],
       backgroundColor: itemsColor,
       selectedItemColor: mainFrameIconsColor,
@@ -76,7 +112,7 @@ class MainFrame extends ConsumerWidget {
   }
 }
 
-PreferredSizeWidget customAppBar(BuildContext context) {
+PreferredSizeWidget customAppBar(BuildContext context, WidgetRef ref) {
   return AppBar(
     backgroundColor: itemsColor,
     actions: [

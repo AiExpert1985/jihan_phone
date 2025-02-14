@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tablets/src/common/functions/dialog_delete_confirmation.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/functions/utils.dart';
+import 'package:tablets/src/common/providers/data_loading_provider.dart';
 import 'package:tablets/src/common/values/constants.dart';
 import 'package:tablets/src/common/forms/edit_box.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/custom_icons.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
-import 'package:tablets/src/features/home/controller/salesman_info_provider.dart';
-import 'package:tablets/src/features/transactions/common/common_functions.dart';
+import 'package:tablets/src/common/providers/salesman_info_provider.dart';
+import 'package:tablets/src/common/widgets/screen_title.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
+import 'package:tablets/src/features/transactions/controllers/pending_transaction_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/model/transaction.dart';
-import 'package:tablets/src/features/transactions/common/common_widgets.dart';
+import 'package:tablets/src/features/transactions/repository/pending_transaction_repository_provider.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
 
 class ReceiptForm extends ConsumerStatefulWidget {
@@ -31,31 +34,21 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
     ref.watch(formDataContainerProvider);
 
     return MainFrame(
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          width: 400,
-          child: SingleChildScrollView(
-            // Wrap the Column with SingleChildScrollView
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                VerticalGap.l,
-                buildScreenTitle(context, 'وصل قبض'),
-                VerticalGap.xl,
-                _buildName(context, formDataNotifier),
-                VerticalGap.xl,
-                _buildReceiptNumber(context, formDataNotifier),
-                VerticalGap.xl,
-                _buildReceivedAmount(context, formDataNotifier),
-                VerticalGap.xxxl,
-                buildTotalAmount(context, total, 'المجموع'),
-                VerticalGap.xl,
-                _buildButtons(context, formDataNotifier),
-                VerticalGap.l,
-              ],
-            ),
-          ),
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            buildScreenTitle(context, 'وصل قبض'),
+            VerticalGap.xxl,
+            _buildName(context, formDataNotifier),
+            VerticalGap.xl,
+            _buildReceiptNumber(context, formDataNotifier),
+            VerticalGap.xl,
+            _buildReceivedAmount(context, formDataNotifier),
+            VerticalGap.xl,
+            _buildNotes(context, formDataNotifier),
+            VerticalGap.xxl,
+            _buildButtons(context, formDataNotifier),
+          ],
         ),
       ),
     );
@@ -65,10 +58,11 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const FormFieldLabel('اسم الزبون'),
-        HorizontalGap.xl,
+        // const FormFieldLabel('الزبون'),
+        // HorizontalGap.m,
         Expanded(
           child: FormInputField(
+            label: 'الزبون',
             initialValue: formDataNotifier.data['name'],
             useThousandSeparator: false,
             onChangedFn: (value) {
@@ -87,10 +81,12 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const FormFieldLabel('التسديد'),
-        HorizontalGap.xl,
+        // const FormFieldLabel('التسديد'),
+        // HorizontalGap.m,
         Expanded(
           child: FormInputField(
+            label: 'التسديد',
+            initialValue: formDataNotifier.data['subTotalAmount'],
             onChangedFn: (value) {
               formDataNotifier.addProperty('subTotalAmount', value);
               final discount = formDataNotifier.data['discount'] ?? 0;
@@ -109,16 +105,40 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const FormFieldLabel('رقم الوصل'),
-        HorizontalGap.xl,
+        // const FormFieldLabel('رقم الوصل'),
+        // HorizontalGap.m,
         Expanded(
           child: FormInputField(
+            initialValue: formDataNotifier.data['number'],
+            label: 'رقم الوصل',
             useThousandSeparator: false,
             onChangedFn: (value) {
               formDataNotifier.addProperty('number', value);
             },
             dataType: FieldDataType.num,
             name: 'number',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotes(BuildContext context, MapStateNotifier formDataNotifier) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // const FormFieldLabel('رقم الوصل'),
+        // HorizontalGap.m,
+        Expanded(
+          child: FormInputField(
+            initialValue: formDataNotifier.data['notes'],
+            label: 'الملاحظات',
+            useThousandSeparator: false,
+            onChangedFn: (value) {
+              formDataNotifier.addProperty('notes', value);
+            },
+            dataType: FieldDataType.text,
+            name: 'notes',
           ),
         ),
       ],
@@ -133,39 +153,98 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
         children: [
           IconButton(
             icon: const ApproveIcon(),
-            onPressed: () {
+            onPressed: () async {
               final formData = formDataNotifier.data;
+              final salesmanInfo = ref.watch(salesmanInfoProvider);
               if (!(formData.containsKey('name') &&
-                  // formData.containsKey('date') &&
                   formData.containsKey('number') &&
                   formData.containsKey('nameDbRef') &&
-                  // formData.containsKey('discount') &&
                   formData.containsKey('totalAmount'))) {
                 failureUserMessage(context, 'يرجى ملئ جميع الحقول بصورة صحيحة');
                 return;
               }
-              _addRequiredProperties(ref, formDataNotifier);
+              if (salesmanInfo.dbRef == null || salesmanInfo.name == null) {
+                // this step is to ensure that the salesman name and dbRef will be exists
+                // I think it rarely being reached, but I added it as a protection ?? maybe I will remove it in future
+                await ref.read(dataLoadingController.notifier).loadSalesmanInfo();
+              }
+              _addRequiredProperties(ref);
               final transaction = Transaction.fromMap(formDataNotifier.data);
-              addTransactionToDb(ref, transaction);
+              final pendingTransactions =
+                  await ref.read(pendingTransactionRepositoryProvider).fetchItemListAsMaps();
+              ref.read(pendingTransactionsDbCache.notifier).set(pendingTransactions);
+              // if pending exists update it, otherwise add new
+              if (formData['dbRef'] != null &&
+                  ref
+                      .read(pendingTransactionsDbCache.notifier)
+                      .getItemByDbRef(formData['dbRef'])
+                      .isNotEmpty) {
+                ref.read(pendingTransactionRepositoryProvider).updateItem(transaction);
+                if (context.mounted) {
+                  successUserMessage(context, 'تم تعديل الوصل بنجاح');
+                }
+              } else {
+                ref.read(pendingTransactionRepositoryProvider).addItem(transaction);
+                if (context.mounted) {
+                  successUserMessage(context, 'تم اضافة الوصل بنجاح');
+                }
+              }
               formDataNotifier.reset();
-              GoRouter.of(context).goNamed(AppRoute.home.name);
-              successUserMessage(context, 'تم اضافة الوصل بنجاح');
+              if (context.mounted) {
+                GoRouter.of(context).goNamed(AppRoute.home.name);
+              }
             },
           ),
+          HorizontalGap.xl,
+          IconButton(
+            onPressed: () async {
+              final userConfiramtion = await showDeleteConfirmationDialog(
+                  context: context, messagePart1: '', messagePart2: 'هل ترغب بحذف القائمة');
+              if (userConfiramtion == null) {
+                // user didn't confirm
+                return;
+              }
+              if (formDataNotifier.data.containsKey('dbRef')) {
+                final transaction = Transaction(
+                  dbRef: formDataNotifier.data['dbRef'],
+                  name: formDataNotifier.data['name'] ?? '',
+                  imageUrls: formDataNotifier.data['imageUrls'] ?? [],
+                  number: formDataNotifier.data['number'] ?? 1111111,
+                  date: formDataNotifier.data['date'] ?? DateTime.now(),
+                  currency: formDataNotifier.data['date'] ?? 'دينار',
+                  transactionType: formDataNotifier.data['transactionType'] ??
+                      TransactionType.customerReceipt.name,
+                  totalAmount: formDataNotifier.data['totalAmount'] ?? 0,
+                  transactionTotalProfit: formDataNotifier.data['transactionTotalProfit'] ?? 0,
+                  isPrinted: formDataNotifier.data['isPrinted'] ?? false,
+                );
+                ref.read(pendingTransactionRepositoryProvider).deleteItem(transaction);
+              }
+
+              if (context.mounted) {
+                failureUserMessage(context, 'تم حذف القائمة');
+                GoRouter.of(context).goNamed(AppRoute.home.name);
+              }
+              // after deleting the transaction, we reset data and go to main menu
+              ref.read(formDataContainerProvider.notifier).reset();
+            },
+            icon: const DeleteIconReceipt(),
+          )
         ],
       ),
     );
   }
 
-  void _addRequiredProperties(WidgetRef ref, MapStateNotifier formDataNotifier) {
-    final salesmanInfoNotifier = ref.read(salesmanInfoProvider.notifier);
-    final salesmanDbRef = salesmanInfoNotifier.dbRef;
-    final salesmanName = salesmanInfoNotifier.name;
-    formDataNotifier.addProperty('dbRef', generateRandomString(len: 8));
+  void _addRequiredProperties(WidgetRef ref) {
+    final salesmanInfo = ref.watch(salesmanInfoProvider);
+    final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+    if (!formDataNotifier.data.containsKey('dbRef')) {
+      formDataNotifier.addProperty('dbRef', generateRandomString(len: 8));
+    }
     formDataNotifier.addProperty('discount', 0);
     formDataNotifier.addProperty('date', DateTime.now());
-    formDataNotifier.addProperty('salesmanDbRef', salesmanDbRef);
-    formDataNotifier.addProperty('salesman', salesmanName);
+    formDataNotifier.addProperty('salesmanDbRef', salesmanInfo.dbRef);
+    formDataNotifier.addProperty('salesman', salesmanInfo.name);
     formDataNotifier.addProperty('imageUrls', [defaultImageUrl]);
     formDataNotifier.addProperty('items', []);
     formDataNotifier.addProperty('paymentType', 'نقدي');
@@ -176,5 +255,8 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
     formDataNotifier.addProperty('itemsTotalProfit', 0);
     formDataNotifier.addProperty('salesmanTransactionComssion', 0);
     formDataNotifier.addProperty('transactionType', TransactionType.customerReceipt.name);
+    if (formDataNotifier.data['notes'] == null) {
+      formDataNotifier.addProperty('notes', '');
+    }
   }
 }

@@ -16,6 +16,7 @@ class DropDownWithSearch extends ConsumerWidget {
       required this.dbCache,
       this.initialValue,
       this.isReadOnly = false,
+      this.onOpenFn,
       super.key});
 
   final DbCache dbCache; // used to bring items (from database) shown in the list
@@ -25,6 +26,7 @@ class DropDownWithSearch extends ConsumerWidget {
   final bool isRequired; // if isRequired = false, then the field will not be validated
   final bool isReadOnly;
   final void Function(Map<String, dynamic>) onChangedFn;
+  final Future<bool?> Function(Map<String, dynamic>?)? onOpenFn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -70,6 +72,7 @@ class DropDownWithSearch extends ConsumerWidget {
         if (item == null) return;
         onChangedFn(item);
       },
+      onBeforePopupOpening: onOpenFn,
     );
   }
 }

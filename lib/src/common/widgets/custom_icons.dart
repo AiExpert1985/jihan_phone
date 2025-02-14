@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:tablets/generated/l10n.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 
-double iconFontSize = 18;
-double iconSize = 30;
+double iconFontSize = 15;
+double iconSize = 25;
 
 class ApproveIcon extends StatelessWidget {
   const ApproveIcon({super.key});
@@ -51,7 +51,9 @@ class AddItem extends StatelessWidget {
         size: iconSize,
       ),
       VerticalGap.s,
-      Text('اضافة مادة', style: TextStyle(color: Colors.white, fontSize: iconFontSize)),
+      Text('اضافة مادة',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white, fontSize: iconFontSize)),
     ]);
   }
 }
@@ -167,7 +169,26 @@ class DeleteIcon extends StatelessWidget {
           size: iconSize,
         ),
         VerticalGap.s,
-        Text(S.of(context).delete, style: TextStyle(fontSize: iconFontSize)),
+        Text('حذف القائمة', style: TextStyle(fontSize: iconFontSize, color: Colors.white)),
+      ],
+    );
+  }
+}
+
+class DeleteIconReceipt extends StatelessWidget {
+  const DeleteIconReceipt({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Icon(
+          Icons.delete,
+          color: Colors.red,
+          size: iconSize,
+        ),
+        VerticalGap.s,
+        Text('حذف ', style: TextStyle(fontSize: iconFontSize, color: Colors.white)),
       ],
     );
   }

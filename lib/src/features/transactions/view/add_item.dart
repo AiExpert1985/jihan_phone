@@ -10,7 +10,6 @@ import 'package:tablets/src/common/values/constants.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/custom_icons.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
-import 'package:tablets/src/features/transactions/common/common_widgets.dart';
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/model/item.dart';
 
@@ -35,43 +34,26 @@ class _AddItemState extends ConsumerState<AddItem> {
   @override
   Widget build(BuildContext context) {
     return MainFrame(
-      includeBottomNavigation: true,
-      child: Container(
-        padding: const EdgeInsets.all(30),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              VerticalGap.m,
-              _buildTitle(),
-              VerticalGap.l,
-              _buildImageSlider(),
-              VerticalGap.l,
-              _buildPrice(),
-              VerticalGap.m,
-              _buildQuantity(),
-              VerticalGap.m,
-              _buildGift(),
-              VerticalGap.m,
-              _buildButtons(context, ref),
-              VerticalGap.m,
-            ],
-          ),
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildTitle(),
+            VerticalGap.xl,
+            _buildImageSlider(),
+            VerticalGap.xl,
+            _buildPrice(),
+            VerticalGap.l,
+            _buildQuantity(),
+            VerticalGap.l,
+            _buildGift(),
+            VerticalGap.l,
+            _buildButtons(context, ref),
+          ],
         ),
       ),
     );
   }
 
-  // Widget _buildImage() {
-  //   return CachedNetworkImage(
-  //     fit: BoxFit.cover,
-  //     height: 150,
-  //     width: 200,
-  //     imageUrl: cartItem.coverImageUrl,
-  //     progressIndicatorBuilder: (context, url, downloadProgress) => Image.memory(kTransparentImage),
-  //     errorWidget: (context, url, error) => const Icon(Icons.error),
-  //   );
-  // }
   Widget _buildImageSlider() {
     final imageUrls = cartItem.imageUrls;
     // int displayedUrlIndex = imageUrls.isNotEmpty ? imageUrls.length - 1 : 0;
@@ -104,7 +86,11 @@ class _AddItemState extends ConsumerState<AddItem> {
     return Text(
       cartItem.name,
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+      style: const TextStyle(
+        fontSize: 20,
+        // fontWeight: FontWeight.bold,
+        color: Colors.white,
+      ),
     );
   }
 
@@ -112,10 +98,11 @@ class _AddItemState extends ConsumerState<AddItem> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const FormFieldLabel('السعر'),
-        HorizontalGap.xl,
+        // const FormFieldLabel('السعر'),
+        // HorizontalGap.xl,
         Expanded(
           child: FormInputField(
+            label: 'السعر',
             initialValue: doubleToStringWithComma(cartItem.sellingPrice),
             onChangedFn: (value) {
               setState(() {
@@ -136,10 +123,11 @@ class _AddItemState extends ConsumerState<AddItem> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const FormFieldLabel('العدد'),
-        HorizontalGap.xl,
+        // const FormFieldLabel('العدد'),
+        // HorizontalGap.xl,
         Expanded(
           child: FormInputField(
+            label: 'العدد',
             initialValue: cartItem.soldQuantity,
             onChangedFn: (value) {
               if (cartItem.stock < value) {
@@ -162,10 +150,11 @@ class _AddItemState extends ConsumerState<AddItem> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const FormFieldLabel('الهدية'),
-        HorizontalGap.xl,
+        // const FormFieldLabel('الهدية'),
+        // HorizontalGap.xl,
         Expanded(
           child: FormInputField(
+            label: 'الهدية',
             initialValue: cartItem.giftQuantity,
             onChangedFn: (value) {
               setState(() {
@@ -181,7 +170,6 @@ class _AddItemState extends ConsumerState<AddItem> {
   }
 
   Widget _buildButtons(BuildContext context, WidgetRef ref) {
-    final cartNotifier = ref.read(cartProvider.notifier);
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -191,7 +179,7 @@ class _AddItemState extends ConsumerState<AddItem> {
             icon: const ApproveIcon(),
             onPressed: () {
               if (_isInValidateQuantity()) {
-                failureUserMessage(context, 'المخزون اقل من العدد المطلوب');
+                // failureUserMessage(context, 'المخزون اقل من العدد المطلوب');
                 // return;
               }
               // all fields must be filled
@@ -208,8 +196,10 @@ class _AddItemState extends ConsumerState<AddItem> {
               cartItem.itemTotalProfit = sellingProfit - giftLoss;
               cartItem.salesmanTotalCommission =
                   cartItem.salesmanCommission * cartItem.soldQuantity!;
-              cartNotifier.addItem(cartItem);
-              Navigator.pop(context);
+              ref.read(cartProvider.notifier).addItem(cartItem);
+              // we pop because we need to return to the previous screen caller, whethe it is the ItemGrid
+              // or Cart
+              Navigator.of(context).pop();
             },
           ),
         ],

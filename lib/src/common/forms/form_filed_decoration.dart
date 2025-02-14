@@ -8,7 +8,7 @@ InputDecoration formFieldDecoration({String? label, bool hideBorders = false}) {
         : Text(
             label,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               color: Colors.white,
             ),
           ),

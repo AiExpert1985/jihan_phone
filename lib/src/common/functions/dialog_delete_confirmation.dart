@@ -25,7 +25,7 @@ Future<bool?> showDeleteConfirmationDialog(
                 textAlign: TextAlign.center,
               ),
               Text(
-                '$messagePart2 ؟',
+                messagePart2,
                 style: const TextStyle(fontSize: 18, color: Colors.white),
                 textAlign: TextAlign.center,
               ),

@@ -23,6 +23,7 @@ class FormInputField extends ConsumerWidget {
     this.textColor = Colors.white,
     this.fontSize = 18,
     this.useThousandSeparator = true,
+    this.allowEmptyString = false,
   });
 
   final double fontSize;
@@ -41,6 +42,7 @@ class FormInputField extends ConsumerWidget {
   final TextEditingController? controller;
   final String name; // used by the widget, not used by me
   final bool useThousandSeparator;
+  final bool allowEmptyString; // to allow onChange function to work even if value is empty
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -91,7 +93,7 @@ class FormInputField extends ConsumerWidget {
         onChangedFn(parsedValue);
         return;
       }
-      if (value.toString().isEmpty) return;
+      if (value.toString().isEmpty && !allowEmptyString) return;
       onChangedFn(value);
     } catch (e) {
       return;

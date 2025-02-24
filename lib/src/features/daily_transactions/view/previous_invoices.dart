@@ -121,6 +121,8 @@ class PreviousInvoices extends ConsumerWidget {
     if (transaction.items == null) {
       return;
     }
+    // first reset the cart provider to solve the problem of accumulating all items
+    ref.read(cartProvider.notifier).reset();
     final productDbCache = ref.watch(productsDbCacheProvider.notifier);
 
     for (var itemData in transaction.items!) {

@@ -36,12 +36,14 @@ class LoadingNotifier extends StateNotifier<bool> {
   // we only set customers once a day, in case there is update, user can press refresh to synch data with
   // fire store (the loadFreshData = true in this case)
   Future<void> loadCustomers({bool loadFreshData = false}) async {
-    final lastAccessNotifier = _ref.read(lastAccessProvider.notifier);
     final salesmanInfoNotifier = _ref.read(salesmanInfoProvider.notifier);
+    String? salesmanDbRef = salesmanInfoNotifier.data.dbRef;
+    // don't load customers unless salesman info is loaded, because it will load all customers not his customers only
+    if (salesmanDbRef == null) return;
+    final lastAccessNotifier = _ref.read(lastAccessProvider.notifier);
     final customersRepository = _ref.read(customerRepositoryProvider);
     final customerDbCache = _ref.read(customerDbCacheProvider.notifier);
     startLoading();
-    String? salesmanDbRef = salesmanInfoNotifier.data.dbRef;
     if (customerDbCache.data.isEmpty || lastAccessNotifier.hasOneDayPassed() || loadFreshData) {
       final customers = await customersRepository.fetchItemListAsMaps(
           filterKey: 'salesmanDbRef', filterValue: salesmanDbRef);

@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:tablets/src/app.dart';
@@ -21,7 +20,6 @@ void main() async {
   registerErrorHandlers();
 
 // Enable offline persistence (make firebase work offline)
-  // FirebaseFirestore.instance.settings = const Settings();
   FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
 
   runApp(const ProviderScope(

@@ -39,7 +39,9 @@ class LoadingNotifier extends StateNotifier<bool> {
     final salesmanInfoNotifier = _ref.read(salesmanInfoProvider.notifier);
     String? salesmanDbRef = salesmanInfoNotifier.data.dbRef;
     // don't load customers unless salesman info is loaded, because it will load all customers not his customers only
-    if (salesmanDbRef == null) return;
+    if (salesmanDbRef == null) {
+      return;
+    }
     final lastAccessNotifier = _ref.read(lastAccessProvider.notifier);
     final customersRepository = _ref.read(customerRepositoryProvider);
     final customerDbCache = _ref.read(customerDbCacheProvider.notifier);

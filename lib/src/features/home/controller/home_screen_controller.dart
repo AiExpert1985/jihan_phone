@@ -29,7 +29,7 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     }
   }
 
-  void selectCustomer(Map<String, dynamic> customer) {
+  void selectCustomer(WidgetRef ref, Map<String, dynamic> customer) async {
     final formDataNotifier = _ref.read(formDataContainerProvider.notifier);
     formDataNotifier.reset();
     _ref.read(cartProvider.notifier).reset();
@@ -37,7 +37,9 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     formDataNotifier.addProperty('nameDbRef', customer['dbRef']);
     formDataNotifier.addProperty('sellingPriceType', customer['sellingPriceType']);
     formDataNotifier.addProperty('isEditable', true);
-    _setCustomerDebtVariables(customer);
+    ref.read(dataLoadingController.notifier).startLoading();
+    await _setCustomerDebtVariables(customer);
+    ref.read(dataLoadingController.notifier).stopLoading();
   }
 
   bool customerIsSelected() {
@@ -69,7 +71,7 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
     return false;
   }
 
-  void _setCustomerDebtVariables(Map<String, dynamic> customer) async {
+  Future<void> _setCustomerDebtVariables(Map<String, dynamic> customer) async {
     num paymentDurationLimit = customer['paymentDurationLimit'];
     final customerDebtInfo = await getCustomerDebtInfo(customer['dbRef'], paymentDurationLimit);
 

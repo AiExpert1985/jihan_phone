@@ -108,7 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               return true;
             },
             onChangedFn: (customer) {
-              ref.read(homeScreenStateController.notifier).selectCustomer(customer);
+              ref.read(homeScreenStateController.notifier).selectCustomer(ref, customer);
             },
             dbCache: ref.read(customerDbCacheProvider.notifier),
           ),

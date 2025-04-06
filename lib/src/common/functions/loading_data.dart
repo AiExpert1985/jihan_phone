@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:tablets/src/common/providers/salesman_info_provider.dart';
 import 'package:tablets/src/features/home/controller/last_access_provider.dart';
-import 'package:tablets/src/features/home/controller/salesman_info_provider.dart';
 import 'package:tablets/src/features/login/repository/accounts_repository.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/products_db_cache_provider.dart';
@@ -22,7 +22,7 @@ Future<void> setCustomersProvider(WidgetRef ref) async {
     final name = matchingAccounts.first['name'];
     salesmanInfoNotifier.setName(name);
   }
-  final salesmanDbRef = salesmanInfoNotifier.dbRef;
+  final salesmanDbRef = salesmanInfoNotifier.data.dbRef;
   final customersRepository = ref.read(customerRepositoryProvider);
   final customers = await customersRepository.fetchItemListAsMaps(
       filterKey: 'salesmanDbRef', filterValue: salesmanDbRef);

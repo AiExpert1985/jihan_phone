@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/providers/data_loading_provider.dart';
+import 'package:tablets/src/common/providers/salesman_info_provider.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
+import 'package:tablets/src/features/gps_location/controllers/location_functions.dart';
 import 'package:tablets/src/features/home/controller/home_screen_controller.dart';
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
@@ -74,12 +76,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildSelectionButtons(BuildContext context) {
+    final formData = ref.read(formDataContainerProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildTransactionSelectionButton(context, 'وصل جديد', AppRoute.receipt.name),
-        HorizontalGap.xxl,
-        _buildTransactionSelectionButton(context, 'قائمة جديدة', AppRoute.items.name),
+        _buildTransactionSelectionButton(context, 'وصل', AppRoute.receipt.name),
+        HorizontalGap.xl,
+        _buildTransactionSelectionButton(context, 'قائمة', AppRoute.items.name),
+        HorizontalGap.xl,
+        LocationButton(formData['nameDbRef']),
       ],
     );
   }
@@ -131,6 +136,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final sellingPriceType = formData['sellingPriceType'];
           formDataNotifier.reset();
           ref.read(cartProvider.notifier).reset();
+
+          // if salesman outside customer zone, no transaction is allowed
+          bool isTransactionAllowed =
+              await isInsideCustomerZone(context, ref, formData['nameDbRef']);
+          if (!isTransactionAllowed && context.mounted) {
+            failureUserMessage(context, 'انت خارج نطاق الزبون');
+            return;
+          }
+
+          // now store customer data in the new transaction
           formDataNotifier.addProperty('name', name);
           formDataNotifier.addProperty('nameDbRef', nameDbRef);
           formDataNotifier.addProperty('sellingPriceType', sellingPriceType);
@@ -146,8 +161,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       },
       child: Container(
-        width: 115,
-        height: 100,
+        width: 75,
+        height: 80,
         decoration: BoxDecoration(
           border: Border.all(),
           borderRadius: const BorderRadius.all(Radius.circular(6)),
@@ -158,6 +173,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Text(
             label,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LocationButton extends ConsumerWidget {
+  const LocationButton(this.customerDbRef, {super.key});
+  final String customerDbRef;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return InkWell(
+      onTap: () async {
+        String? salesmanDbRef = ref.read(salesmanInfoProvider.notifier).data.dbRef;
+        if (salesmanDbRef == null) {
+          await ref.read(dataLoadingController.notifier).loadSalesmanInfo();
+        }
+        if (context.mounted) {
+          bool isTransactionAllowed = await isInsideCustomerZone(context, ref, customerDbRef);
+          if (!isTransactionAllowed && context.mounted) {
+            // if out of customer zone, visit is not registered
+            failureUserMessage(context, 'انت خارج نطاق الزبون');
+            return;
+          }
+        }
+
+        bool success = await registerVisit(ref, salesmanDbRef!, customerDbRef);
+        if (success && context.mounted) {
+          successUserMessage(context, 'تم تسجيل الزيارة بنجاح');
+        } else if (!success && context.mounted) {
+          failureUserMessage(context, 'لم يتم تسجيل الزيارة');
+        }
+      },
+      child: Container(
+        width: 75,
+        height: 80,
+        decoration: BoxDecoration(
+          border: Border.all(),
+          borderRadius: const BorderRadius.all(Radius.circular(6)),
+          gradient: itemColorGradient,
+        ),
+        padding: const EdgeInsets.all(12),
+        child: const Center(
+          child: Text(
+            'زيارة',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
       ),

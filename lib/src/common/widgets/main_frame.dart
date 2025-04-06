@@ -118,7 +118,7 @@ PreferredSizeWidget customAppBar(BuildContext context, WidgetRef ref) {
     actions: [
       TextButton.icon(
         onPressed: () async {
-          final confiramtion = await showDeleteConfirmationDialog(
+          final confiramtion = await showUserConfirmationDialog(
               context: context, messagePart1: "", messagePart2: S.of(context).alert_before_signout);
           if (confiramtion != null) {
             FirebaseAuth.instance.signOut();

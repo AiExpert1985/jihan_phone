@@ -57,7 +57,7 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
       return true;
     }
 
-    final confirmation = await showDeleteConfirmationDialog(
+    final confirmation = await showUserConfirmationDialog(
       context: context,
       messagePart1: "",
       messagePart2: 'سوف يتم حذف قائمة ${formData['name']} ؟',

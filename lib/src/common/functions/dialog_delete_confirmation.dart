@@ -6,7 +6,7 @@ import 'package:tablets/src/common/widgets/main_frame.dart';
 /// return true if user confirmed the deletion
 /// or null if user chooses to cancel or close the dialog by clicking anywhere outside the dialog
 
-Future<bool?> showDeleteConfirmationDialog(
+Future<bool?> showUserConfirmationDialog(
     {required BuildContext context, required String messagePart1, required String messagePart2}) {
   return showDialog<bool>(
     context: context,

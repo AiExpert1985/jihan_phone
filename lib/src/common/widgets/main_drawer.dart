@@ -83,7 +83,7 @@ class MainDrawer extends ConsumerWidget {
                       leading: const Icon(Icons.logout),
                       onTap: () async {
                         Navigator.pop(context);
-                        final confiramtion = await showDeleteConfirmationDialog(
+                        final confiramtion = await showUserConfirmationDialog(
                             context: context,
                             messagePart1: '',
                             messagePart2: 'هل ترغب بالخروج من البرنامج؟');

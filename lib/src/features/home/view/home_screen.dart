@@ -137,14 +137,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           formDataNotifier.reset();
           ref.read(cartProvider.notifier).reset();
 
-          // if salesman outside customer zone, no transaction is allowed
-          bool isTransactionAllowed =
-              await isInsideCustomerZone(context, ref, formData['nameDbRef']);
-          if (!isTransactionAllowed && context.mounted) {
-            failureUserMessage(context, 'انت خارج نطاق الزبون');
-            return;
-          }
-
           // now store customer data in the new transaction
           formDataNotifier.addProperty('name', name);
           formDataNotifier.addProperty('nameDbRef', nameDbRef);

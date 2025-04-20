@@ -105,7 +105,12 @@ Future<bool> registerVisit(WidgetRef ref, String salesmanDbRef, String customerD
   salesPoint.isVisited = true;
   if (hasTransaction) {
     salesPoint.hasTransaction = true;
+    salesPoint.transactionDate = DateTime.now();
+    salesPoint.visitDate ??= salesPoint.transactionDate; // maybe never reached !
+  } else {
+    salesPoint.visitDate = DateTime.now();
   }
+
   await taskRepositoryProvider.updateItem(salesPoint);
   return true;
 }

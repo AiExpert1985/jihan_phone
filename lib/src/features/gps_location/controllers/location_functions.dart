@@ -19,7 +19,7 @@ Future<void> requestLocationPermission() async {
 }
 
 Future<bool> isInsideCustomerZone(BuildContext context, WidgetRef ref, String customerDbRef) async {
-  const double allowedDistance = 6; // meters allowed to be away form the gps point
+  const double allowedDistance = 30; // meters allowed to be away form the gps point
   await requestLocationPermission();
   Position position = await Geolocator.getCurrentPosition();
 

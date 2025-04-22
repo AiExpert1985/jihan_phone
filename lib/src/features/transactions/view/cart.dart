@@ -164,20 +164,14 @@ class ShoppingCart extends ConsumerWidget {
                   }
                 }
 
+                registerVisit(ref, salesmanInfo.dbRef!, formData['nameDbRef'],
+                    registerTransaction: true);
+
+                // after adding the transaction, we reset data and go to main menu
+                ref.read(formDataContainerProvider.notifier).reset();
+                ref.read(cartProvider.notifier).reset();
                 if (context.mounted) {
-                  // if salesman outside customer zone, register transaction
-                  bool isTransactionAllowed =
-                      await isInsideCustomerZone(context, ref, formData['nameDbRef']);
-                  if (isTransactionAllowed) {
-                    registerVisit(ref, salesmanInfo.dbRef!, formData['nameDbRef'],
-                        hasTransaction: true);
-                  }
-                  // after adding the transaction, we reset data and go to main menu
-                  ref.read(formDataContainerProvider.notifier).reset();
-                  ref.read(cartProvider.notifier).reset();
-                  if (context.mounted) {
-                    GoRouter.of(context).goNamed(AppRoute.home.name);
-                  }
+                  GoRouter.of(context).goNamed(AppRoute.home.name);
                 }
               },
               icon: const SaveInvoice(),

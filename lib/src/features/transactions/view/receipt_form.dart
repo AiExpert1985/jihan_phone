@@ -190,15 +190,10 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
                   successUserMessage(context, 'تم اضافة الوصل بنجاح');
                 }
               }
-              if (context.mounted) {
-                // if salesman outside customer zone, register transaction
-                bool isTransactionAllowed =
-                    await isInsideCustomerZone(context, ref, formData['nameDbRef']);
-                if (isTransactionAllowed) {
-                  registerVisit(ref, salesmanInfo.dbRef!, formData['nameDbRef'],
-                      hasTransaction: true);
-                }
-              }
+
+              registerVisit(ref, salesmanInfo.dbRef!, formData['nameDbRef'],
+                  registerTransaction: true);
+
               formDataNotifier.reset();
               if (context.mounted) {
                 GoRouter.of(context).goNamed(AppRoute.home.name);

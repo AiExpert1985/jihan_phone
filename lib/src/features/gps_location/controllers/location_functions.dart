@@ -90,7 +90,7 @@ Future<SalesPoint?> getSalesPoint(
 }
 
 Future<bool> registerVisit(WidgetRef ref, String salesmanDbRef, String customerDbRef,
-    {bool registerTransaction = false}) async {
+    {bool isInvoice = false, bool insideCustomerZone = false}) async {
   final taskRepositoryProvider = ref.read(tasksRepositoryProvider);
   final salesPoint = await getSalesPoint(taskRepositoryProvider, salesmanDbRef, customerDbRef);
   if (salesPoint == null) {
@@ -102,8 +102,8 @@ Future<bool> registerVisit(WidgetRef ref, String salesmanDbRef, String customerD
     salesPoint.x = customer.x;
     salesPoint.y = customer.y;
   }
-  if (registerTransaction) {
-    salesPoint.hasTransaction = salesPoint.isVisited; // only true if isVisited
+  if (isInvoice) {
+    salesPoint.hasTransaction = insideCustomerZone;
     salesPoint.transactionDate = DateTime.now();
   } else {
     salesPoint.isVisited = true;

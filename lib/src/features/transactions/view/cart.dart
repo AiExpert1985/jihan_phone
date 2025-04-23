@@ -164,8 +164,14 @@ class ShoppingCart extends ConsumerWidget {
                   }
                 }
 
+                bool insideCustomerZone = false;
+                if (context.mounted) {
+                  insideCustomerZone =
+                      await isInsideCustomerZone(context, ref, formData['nameDbRef']);
+                }
+
                 registerVisit(ref, salesmanInfo.dbRef!, formData['nameDbRef'],
-                    registerTransaction: true);
+                    isInvoice: true, insideCustomerZone: insideCustomerZone);
 
                 // after adding the transaction, we reset data and go to main menu
                 ref.read(formDataContainerProvider.notifier).reset();

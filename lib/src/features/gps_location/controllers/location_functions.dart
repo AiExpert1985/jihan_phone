@@ -19,9 +19,12 @@ Future<void> requestLocationPermission() async {
 }
 
 Future<bool> isInsideCustomerZone(BuildContext context, WidgetRef ref, String customerDbRef) async {
-  const double allowedDistance = 16; // meters allowed to be away form the gps point
+  const double allowedDistance = 30; // meters allowed to be away form the gps point
   await requestLocationPermission();
-  Position position = await Geolocator.getCurrentPosition();
+  //! it is important to add desiredAccuracy (althought it is noted as depricated by IDE)
+  //! without it, the distance to customer location was wrongly calculated, and caused issues with salesmen
+  // ignore: deprecated_member_use
+  Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
 
   final customer = await getCustomer(ref, customerDbRef);
 
@@ -50,6 +53,9 @@ Future<bool> isInsideCustomerZone(BuildContext context, WidgetRef ref, String cu
 
   double distance = Geolocator.distanceBetween(
       position.latitude, position.longitude, customerLocation!.x, customerLocation.y);
+  // if (context.mounted) {
+  //   successUserMessage(context, 'distance is $distance');
+  // }
 
   if (distance > allowedDistance) {
     return false;

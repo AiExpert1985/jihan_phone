@@ -19,7 +19,7 @@ Future<void> requestLocationPermission() async {
 }
 
 Future<bool> isInsideCustomerZone(BuildContext context, WidgetRef ref, String customerDbRef) async {
-  const double allowedDistance = 40; // meters allowed to be away form the gps point
+  const double allowedDistance = 30; // meters allowed to be away form the gps point
   await requestLocationPermission();
   //! it is important to add desiredAccuracy (althought it is noted as depricated by IDE)
   //! without it, the distance to customer location was wrongly calculated, and caused issues with salesmen

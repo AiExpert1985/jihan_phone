@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tablets/src/common/functions/debug_print.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
 import 'package:tablets/src/common/providers/data_loading_provider.dart';
 import 'package:tablets/src/common/providers/salesman_info_provider.dart';
@@ -172,50 +175,181 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-class LocationButton extends ConsumerWidget {
+// note that I added cool down to prevent multiple tapping for visit button
+class LocationButton extends ConsumerStatefulWidget {
   const LocationButton(this.customerDbRef, {super.key});
   final String customerDbRef;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return InkWell(
-      onTap: () async {
-        String? salesmanDbRef = ref.read(salesmanInfoProvider.notifier).data.dbRef;
-        if (salesmanDbRef == null) {
-          await ref.read(dataLoadingController.notifier).loadSalesmanInfo();
-        }
-        if (context.mounted) {
-          bool isTransactionAllowed = await isInsideCustomerZone(context, ref, customerDbRef);
-          if (!isTransactionAllowed && context.mounted) {
-            // if out of customer zone, visit is not registered
-            failureUserMessage(context, 'انت خارج نطاق الزبون');
-            return;
-          }
-        }
+  ConsumerState<LocationButton> createState() => _LocationButtonState();
+}
 
-        bool success = await registerVisit(ref, salesmanDbRef!, customerDbRef);
-        if (success && context.mounted) {
-          successUserMessage(context, 'تم تسجيل الزيارة بنجاح');
-        } else if (!success && context.mounted) {
-          failureUserMessage(context, 'لم يتم تسجيل الزيارة');
+class _LocationButtonState extends ConsumerState<LocationButton> {
+  // State variable to track if button is on cooldown
+  bool _isOnCooldown = false;
+  Timer? _cooldownTimer;
+
+  @override
+  void dispose() {
+    // Cancel the timer if the widget is disposed to prevent memory leaks
+    // and errors from calling setState on an unmounted widget.
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCooldown() {
+    setState(() {
+      _isOnCooldown = true;
+    });
+
+    // Cancel any existing timer before starting a new one
+    _cooldownTimer?.cancel();
+
+    _cooldownTimer = Timer(const Duration(seconds: 10), () {
+      // When the timer finishes, reset the cooldown state
+      // Check if the widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          _isOnCooldown = false;
+        });
+      }
+    });
+  }
+
+  // Separate function for the actual logic executed on tap
+  Future<void> _performTapAction() async {
+    // --- This is your original async logic ---
+    try {
+      String? salesmanDbRef = ref.read(salesmanInfoProvider.notifier).data.dbRef;
+
+      if (salesmanDbRef == null) {
+        await ref.read(dataLoadingController.notifier).loadSalesmanInfo();
+        salesmanDbRef = ref.read(salesmanInfoProvider).dbRef;
+        if (salesmanDbRef == null) {
+          if (mounted) {
+            failureUserMessage(context, 'لا يمكن تحديد معلومات المندوب');
+          }
+          return;
         }
-      },
-      child: Container(
-        width: 75,
-        height: 80,
-        decoration: BoxDecoration(
-          border: Border.all(),
-          borderRadius: const BorderRadius.all(Radius.circular(6)),
-          gradient: itemColorGradient,
-        ),
-        padding: const EdgeInsets.all(12),
-        child: const Center(
-          child: Text(
-            'زيارة',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+      }
+
+      bool isTransactionAllowed = false;
+      if (mounted) {
+        isTransactionAllowed = await isInsideCustomerZone(context, ref, widget.customerDbRef);
+      }
+
+      if (!isTransactionAllowed) {
+        if (mounted) {
+          failureUserMessage(context, 'انت خارج نطاق الزبون');
+        }
+        return;
+      }
+
+      final bool success = await registerVisit(ref, salesmanDbRef, widget.customerDbRef);
+
+      if (success && mounted) {
+        successUserMessage(context, 'تم تسجيل الزيارة بنجاح');
+      } else if (!success && mounted) {
+        failureUserMessage(context, 'لم يتم تسجيل الزيارة');
+      }
+    } catch (e) {
+      errorPrint("Error during location button tap action: $e");
+      if (mounted) {
+        failureUserMessage(context, 'حدث خطأ غير متوقع');
+      }
+    }
+    // --- End of original async logic ---
+  }
+
+  void _handleTap() {
+    // 1. Check if already on cooldown. If so, do nothing.
+    if (_isOnCooldown) {
+      tempPrint("Button on cooldown. Tap ignored.");
+      return;
+    }
+
+    // 2. Start the 30-second cooldown immediately.
+    _startCooldown();
+
+    // 3. Execute the actual tap actions (async).
+    //    Note: The cooldown runs independently of this execution.
+    _performTapAction();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      // Disable tap if on cooldown
+      onTap: _isOnCooldown ? null : _handleTap,
+      child: Opacity(
+        // Make it visually apparent when disabled
+        opacity: _isOnCooldown ? 0.5 : 1.0,
+        child: Container(
+          width: 75,
+          height: 80,
+          decoration: BoxDecoration(
+            border: Border.all(),
+            borderRadius: const BorderRadius.all(Radius.circular(6)),
+            gradient: itemColorGradient,
+          ),
+          padding: const EdgeInsets.all(12),
+          child: const Center(
+            // Text remains the same, disabled state handled by InkWell/Opacity
+            child: Text(
+              'زيارة',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+// class LocationButton extends ConsumerWidget {
+//   const LocationButton(this.customerDbRef, {super.key});
+//   final String customerDbRef;
+
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     return InkWell(
+//       onTap: () async {
+//         String? salesmanDbRef = ref.read(salesmanInfoProvider.notifier).data.dbRef;
+//         if (salesmanDbRef == null) {
+//           await ref.read(dataLoadingController.notifier).loadSalesmanInfo();
+//         }
+//         if (context.mounted) {
+//           bool isTransactionAllowed = await isInsideCustomerZone(context, ref, customerDbRef);
+//           if (!isTransactionAllowed && context.mounted) {
+//             // if out of customer zone, visit is not registered
+//             failureUserMessage(context, 'انت خارج نطاق الزبون');
+//             return;
+//           }
+//         }
+
+//         bool success = await registerVisit(ref, salesmanDbRef!, customerDbRef);
+//         if (success && context.mounted) {
+//           successUserMessage(context, 'تم تسجيل الزيارة بنجاح');
+//         } else if (!success && context.mounted) {
+//           failureUserMessage(context, 'لم يتم تسجيل الزيارة');
+//         }
+//       },
+//       child: Container(
+//         width: 75,
+//         height: 80,
+//         decoration: BoxDecoration(
+//           border: Border.all(),
+//           borderRadius: const BorderRadius.all(Radius.circular(6)),
+//           gradient: itemColorGradient,
+//         ),
+//         padding: const EdgeInsets.all(12),
+//         child: const Center(
+//           child: Text(
+//             'زيارة',
+//             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }

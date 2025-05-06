@@ -9,6 +9,7 @@ import 'package:tablets/src/common/providers/data_loading_provider.dart';
 import 'package:tablets/src/common/values/constants.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/circle.dart';
+import 'package:tablets/src/common/widgets/cool_down_button.dart';
 import 'package:tablets/src/common/widgets/custom_icons.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/common/providers/salesman_info_provider.dart';
@@ -140,8 +141,12 @@ class ShoppingCart extends ConsumerWidget {
               formData.isNotEmpty &&
               salesmanInfo.name != null &&
               salesmanInfo.dbRef != null)
-            IconButton(
+// Make sure to import the file where CooldownWrapperIconButton is defined.
+
+            CooldownWrapperIconButton(
+              icon: const SaveInvoice(), // Your existing icon widget
               onPressed: () async {
+                // Your existing onPressed async function
                 final transaction =
                     _createTransaction(ref, totalAmount, totalCommission, totalProfit, totalWeight);
                 final pendingTransactions =
@@ -153,12 +158,12 @@ class ShoppingCart extends ConsumerWidget {
                         .read(pendingTransactionsDbCache.notifier)
                         .getItemByDbRef(formData['dbRef'])
                         .isNotEmpty) {
-                  ref.read(pendingTransactionRepositoryProvider).updateItem(transaction);
+                  await ref.read(pendingTransactionRepositoryProvider).updateItem(transaction);
                   if (context.mounted) {
                     successUserMessage(context, 'تم تعديل القائمة بنجاح');
                   }
                 } else {
-                  ref.read(pendingTransactionRepositoryProvider).addItem(transaction);
+                  await ref.read(pendingTransactionRepositoryProvider).addItem(transaction);
                   if (context.mounted) {
                     successUserMessage(context, 'تم اضافة القائمة بنجاح');
                   }
@@ -180,7 +185,7 @@ class ShoppingCart extends ConsumerWidget {
                   GoRouter.of(context).goNamed(AppRoute.home.name);
                 }
               },
-              icon: const SaveInvoice(),
+              // cooldownDuration: const Duration(seconds: 10), // This is the default, you can omit or change it
             ),
           if (cartItems.isNotEmpty && formData.isNotEmpty)
             IconButton(

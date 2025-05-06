@@ -8,6 +8,7 @@ import 'package:tablets/src/common/providers/data_loading_provider.dart';
 import 'package:tablets/src/common/values/constants.dart';
 import 'package:tablets/src/common/forms/edit_box.dart';
 import 'package:tablets/src/common/values/gaps.dart';
+import 'package:tablets/src/common/widgets/cool_down_button.dart';
 import 'package:tablets/src/common/widgets/custom_icons.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/common/providers/salesman_info_provider.dart';
@@ -151,7 +152,7 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(
+          CooldownWrapperIconButton(
             icon: const ApproveIcon(),
             onPressed: () async {
               final formData = formDataNotifier.data;
@@ -179,12 +180,12 @@ class _ReceiptFormState extends ConsumerState<ReceiptForm> {
                       .read(pendingTransactionsDbCache.notifier)
                       .getItemByDbRef(formData['dbRef'])
                       .isNotEmpty) {
-                ref.read(pendingTransactionRepositoryProvider).updateItem(transaction);
+                await ref.read(pendingTransactionRepositoryProvider).updateItem(transaction);
                 if (context.mounted) {
                   successUserMessage(context, 'تم تعديل الوصل بنجاح');
                 }
               } else {
-                ref.read(pendingTransactionRepositoryProvider).addItem(transaction);
+                await ref.read(pendingTransactionRepositoryProvider).addItem(transaction);
                 if (context.mounted) {
                   successUserMessage(context, 'تم اضافة الوصل بنجاح');
                 }

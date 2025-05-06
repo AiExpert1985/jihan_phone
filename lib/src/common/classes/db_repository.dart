@@ -131,14 +131,29 @@ class DbRepository {
   /// below function fetch data from firestore if there is internet connection
   /// if not, it fetch from cache
   Future<List<Map<String, dynamic>>> fetchItemListAsMaps(
-      {String? filterKey, String? filterValue}) async {
+      {String? filterKey, dynamic filterValue}) async {
     try {
       Query query = _firestore.collection(_collectionName);
 
-      if (filterKey != null) {
-        query = query
-            .where(filterKey, isGreaterThanOrEqualTo: filterValue)
-            .where(filterKey, isLessThan: '$filterValue\uf8ff');
+      if (filterKey != null && filterValue != null) {
+        // Check filterValue is not null too
+        if (filterValue is String) {
+          // String prefix filter (existing logic)
+          query = query
+              .where(filterKey, isGreaterThanOrEqualTo: filterValue)
+              .where(filterKey, isLessThan: '$filterValue\uf8ff');
+        } else if (filterValue is DateTime) {
+          // DateTime filter (matches within the specified day)
+          DateTime startOfDay = DateTime(filterValue.year, filterValue.month, filterValue.day);
+          DateTime startOfNextDay = startOfDay.add(const Duration(days: 1));
+          Timestamp startTimestamp = Timestamp.fromDate(startOfDay);
+          Timestamp endTimestamp = Timestamp.fromDate(startOfNextDay);
+
+          query = query
+              .where(filterKey, isGreaterThanOrEqualTo: startTimestamp)
+              .where(filterKey, isLessThan: endTimestamp);
+        }
+        // NOTE: If filterValue is not String or DateTime, no filter is applied for that key.
       }
       // Attempt to fetch data from Firestore
       final connectivityResult = await Connectivity().checkConnectivity();

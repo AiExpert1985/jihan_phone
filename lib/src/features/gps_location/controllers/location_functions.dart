@@ -4,7 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:tablets/src/common/classes/db_repository.dart';
 import 'package:tablets/src/common/functions/debug_print.dart';
 import 'package:tablets/src/common/functions/dialog_delete_confirmation.dart';
-import 'package:tablets/src/common/functions/utils.dart';
 import 'package:tablets/src/features/customers/model/customer.dart';
 import 'package:tablets/src/features/gps_location/model/location.dart';
 import 'package:tablets/src/features/gps_location/model/salespoint.dart';
@@ -80,14 +79,14 @@ Future<Location?> getCustomerLocation(Customer customer) async {
 Future<SalesPoint?> getSalesPoint(
     DbRepository taskRepositoryProvider, String salesmanDbRef, String customerDbRef) async {
   final salesPoints = await taskRepositoryProvider.fetchItemListAsMaps(
-      filterKey: 'salesmanDbRef', filterValue: salesmanDbRef);
+      filterKey: 'date', filterValue: DateTime.now());
+  tempPrint(salesPoints.length);
   if (salesPoints.isEmpty) {
     return null;
   }
-  final today = DateTime.now();
   final todaySalesPoints = salesPoints
       .where((item) =>
-          item['customerDbRef'] == customerDbRef && isSameDay(item['date'].toDate(), today))
+          item['customerDbRef'] == customerDbRef && item['salesmanDbRef'] == salesmanDbRef)
       .toList();
   if (todaySalesPoints.isEmpty) {
     return null;

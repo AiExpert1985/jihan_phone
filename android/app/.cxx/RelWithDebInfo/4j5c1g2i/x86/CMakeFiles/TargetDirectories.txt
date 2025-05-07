@@ -1,2 +1,0 @@
-E:/jihan_phone/tablets/android/app/.cxx/RelWithDebInfo/4j5c1g2i/x86/CMakeFiles/edit_cache.dir
-E:/jihan_phone/tablets/android/app/.cxx/RelWithDebInfo/4j5c1g2i/x86/CMakeFiles/rebuild_cache.dir

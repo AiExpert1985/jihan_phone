@@ -131,6 +131,12 @@ Future<void> updateTask(WidgetRef ref, SalesPoint salesPoint, bool isInvoice, Da
   if (isInvoice) {
     salesPoint.hasTransaction = salesPoint.isVisited || insideCustomerZone;
     salesPoint.transactionDate = time;
+    if (insideCustomerZone && !salesPoint.isVisited) {
+      salesPoint.isVisited = true;
+    }
+    if (insideCustomerZone && salesPoint.visitDate == null) {
+      salesPoint.visitDate = time;
+    }
   } else {
     salesPoint.isVisited = true;
     salesPoint.visitDate = time;

@@ -109,7 +109,7 @@ Future<bool> registerVisit(WidgetRef ref, String salesmanDbRef, String customerD
   }
   final time = DateTime.now();
   if (isInvoice) {
-    salesPoint.hasTransaction = salesPoint.isVisited;
+    salesPoint.hasTransaction = salesPoint.isVisited || insideCustomerZone;
     salesPoint.transactionDate = time;
   } else {
     salesPoint.isVisited = true;
@@ -137,7 +137,8 @@ Future<void> verifyRegisteredVisit(WidgetRef ref, SalesPoint salesPoint, bool is
     DateTime time, bool insideCustomerZone) async {
   final taskRepositoryProvider = ref.read(tasksRepositoryProvider);
   if (isInvoice) {
-    salesPoint.hasTransaction = insideCustomerZone;
+    salesPoint.hasTransaction =
+        salesPoint.hasTransaction = salesPoint.isVisited || insideCustomerZone;
     salesPoint.transactionDate = time;
   } else {
     salesPoint.isVisited = true;

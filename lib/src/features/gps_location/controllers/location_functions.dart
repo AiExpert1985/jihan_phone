@@ -18,7 +18,7 @@ Future<void> requestLocationPermission() async {
 }
 
 Future<bool> isInsideCustomerZone(BuildContext context, WidgetRef ref, String customerDbRef) async {
-  const double allowedDistance = 30; // meters allowed to be away form the gps point
+  const double allowedDistance = 40; // meters allowed to be away form the gps point
   await requestLocationPermission();
   //! it is important to add desiredAccuracy (althought it is noted as depricated by IDE)
   //! without it, the distance to customer location was wrongly calculated, and caused issues with salesmen
@@ -120,7 +120,7 @@ Future<bool> registerVisit(WidgetRef ref, String salesmanDbRef, String customerD
 
   // This code will execute after 30 seconds.
   // It runs independently of the registerVisit function's return value.
-  Future.delayed(const Duration(seconds: 30), () async {
+  Future.delayed(const Duration(seconds: 600), () async {
     try {
       await verifyRegisteredVisit(ref, salesPoint, isInvoice, time, insideCustomerZone);
     } catch (e) {

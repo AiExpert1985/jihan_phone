@@ -181,9 +181,9 @@ class ShoppingCart extends ConsumerWidget {
                     isInvoice: true, insideCustomerZone: insideCustomerZone);
                 // if pending exists update it, otherwise add new
                 if (successfulTaskUpdate && context.mounted) {
-                  successUserMessage(context, 'تم تحديث حالة نقطة البيع');
+                  successUserMessage(context, 'تم تحديث زيارة نقطة البيع');
                 } else if (!successfulTaskUpdate && context.mounted) {
-                  successUserMessage(context, 'لم يتم تحديث حالة نقطة البيع');
+                  successUserMessage(context, 'لم يتم تحديث زيارة نقطة البيع');
                 }
 
                 // after adding the transaction, we reset data and go to main menu

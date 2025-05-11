@@ -175,7 +175,7 @@ class ShoppingCart extends ConsumerWidget {
                       await isInsideCustomerZone(context, ref, formData['nameDbRef']);
                 }
 
-                registerVisit(ref, salesmanInfo.dbRef!, formData['nameDbRef'],
+                await registerVisit(ref, salesmanInfo.dbRef!, formData['nameDbRef'],
                     isInvoice: true, insideCustomerZone: insideCustomerZone);
 
                 // after adding the transaction, we reset data and go to main menu

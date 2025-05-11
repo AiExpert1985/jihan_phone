@@ -248,7 +248,7 @@ class _LocationButtonState extends ConsumerState<LocationButton> {
       final bool success = await registerVisit(ref, salesmanDbRef, widget.customerDbRef);
 
       if (success && mounted) {
-        successUserMessage(context, 'تم تثبيت زيارة نقطة البيع');
+        successUserMessage(context, 'تم تسجيل الزيارة');
       } else if (!success && mounted) {
         failureUserMessage(context, 'لم يتم تسجيل الزيارة');
       }

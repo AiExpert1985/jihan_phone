@@ -118,13 +118,13 @@ Future<bool> registerVisit(WidgetRef ref, String salesmanDbRef, String customerD
 
   await taskRepositoryProvider.updateItem(salesPoint);
 
-  // This code will execute after 30 seconds.
+  // This code will execute after 180 seconds.
   // It runs independently of the registerVisit function's return value.
-  Future.delayed(const Duration(seconds: 600), () async {
+  Future.delayed(const Duration(seconds: 180), () async {
     try {
       await verifyRegisteredVisit(ref, salesPoint, isInvoice, time, insideCustomerZone);
     } catch (e) {
-      errorPrint('not verified');
+      errorPrint('can not verify registerVisit');
     }
   });
   return true;

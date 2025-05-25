@@ -1,107 +1,182 @@
-import 'dart:async';
+// lib/src/common/classes/db_cache.dart
 
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tablets/src/common/functions/debug_print.dart';
+import 'package:tablets/src/common/classes/db_repository.dart'; // Ensure this import is correct
 
 enum DbCacheOperationTypes { add, edit, delete }
 
-/// list of map mirrors the collections in firebase database
-/// this cache is only created once for each feature at the time app started
-/// then it will be updated using features form (add, update, delete), so there will
-/// be no need to reload data from database (firestore) again until next app started
 class DbCache extends StateNotifier<List<Map<String, dynamic>>> {
-  DbCache() : super([]);
+  final DbRepository? _repository; // For stream-based updates
+  final String? _streamFilterKey;
+  final dynamic _streamFilterValue;
+  StreamSubscription<List<Map<String, dynamic>>>? _streamSubscription;
+  final String _collectionNameForLogging = "unknown_collection"; // For better logging
 
-  /// add one entery to the existing dbCache list
-  void _addData(Map<String, dynamic> newData) {
-    state = [...state, newData];
+  DbCache({
+    DbRepository? repository,
+    String? streamFilterKey,
+    dynamic streamFilterValue,
+    // You could optionally pass the collection name for logging if DbRepository doesn't expose it
+    // String? collectionNameForLogging,
+  })  : _repository = repository,
+        _streamFilterKey = streamFilterKey,
+        _streamFilterValue = streamFilterValue,
+        // _collectionNameForLogging = collectionNameForLogging ?? repository?.getCollectionName() ?? "unknown", // Example
+        super([]) {
+    _initStreamListener(); // Start listening if repository is provided
   }
 
-  /// update the data of one entery in the existing dbCache list
+  void _initStreamListener() {
+    if (_repository != null) {
+      // If the stream is specifically for a filtered list (e.g., by salesmanDbRef)
+      // and the filter value isn't available yet, subscribe to an empty stream to avoid errors/unintended full loads.
+      if (_streamFilterKey == 'salesmanDbRef' &&
+          (_streamFilterValue == null ||
+              (_streamFilterValue is String && _streamFilterValue.isEmpty))) {
+        tempPrint(
+            'DbCache for $_collectionNameForLogging: Filter value for $_streamFilterKey is null/empty. Listening to empty stream.');
+        _streamSubscription?.cancel(); // Cancel any old one
+        _streamSubscription = Stream.value(<Map<String, dynamic>>[]).listen((newData) {
+          if (mounted) state = newData;
+        });
+        return; // Exit early
+      }
+
+      _streamSubscription?.cancel(); // Cancel any existing subscription before starting a new one
+      _streamSubscription = _repository
+          .watchItemListAsMaps(filterKey: _streamFilterKey, filterValue: _streamFilterValue)
+          .listen(
+        (newData) {
+          if (mounted) state = newData; // Update state when stream emits new data
+        },
+        onError: (error) {
+          errorPrint(
+              'Error in DbCache stream for $_collectionNameForLogging (filter: $_streamFilterKey): $error');
+          if (mounted) state = []; // Optionally, set state to an error state or an empty list
+        },
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _streamSubscription?.cancel();
+    tempPrint(
+        'DbCache stream listener disposed for $_collectionNameForLogging (filter: $_streamFilterKey).');
+    super.dispose();
+  }
+
+  // --- Your existing methods for manual cache manipulation ---
+  // These methods will operate on the current 'state', which is now stream-populated.
+  // Be mindful that manual calls to `set`, `_addData`, etc., will be overwritten
+  // by the next emission from the stream if the cache is stream-backed.
+
+  void _addData(Map<String, dynamic> newData) {
+    if (mounted) state = [...state, newData];
+  }
+
   void _updateData(int index, Map<String, dynamic> newData) {
-    if (index >= 0 && index < state.length) {
+    if (mounted && index >= 0 && index < state.length) {
       final stateCopy = [...state];
       stateCopy[index] = newData;
       state = [...stateCopy];
     }
   }
 
-  /// remove one entery from existing dbCache list
   void _removeData(int index) {
-    if (index >= 0 && index < state.length) {
+    if (mounted && index >= 0 && index < state.length) {
       final stateCopy = [...state];
       stateCopy.removeAt(index);
       state = [...stateCopy];
     }
   }
 
-  /// set the whole dbCache
+  // CAUTION: If this DbCache is stream-backed from a provider,
+  // calling set() manually will temporarily overwrite the stream's data
+  // until the stream emits its next value.
   void set(List<Map<String, dynamic>> newData) {
-    state = newData;
+    if (mounted) state = newData;
   }
 
-  /// update dbCache list, it includes all kind of updates (add, edit, delete)
   void update(Map<String, dynamic> newData, DbCacheOperationTypes operationType) {
+    if (!mounted) return;
     if (operationType == DbCacheOperationTypes.add) {
       _addData(newData);
       return;
     }
     final index = _getItemIndex(newData);
-    if (index == -1) return;
+    if (index == -1) return; // Item not found
     if (operationType == DbCacheOperationTypes.edit) {
       _updateData(index, newData);
     } else if (operationType == DbCacheOperationTypes.delete) {
       _removeData(index);
     } else {
-      errorPrint('Unkown operation');
+      errorPrint('Unknown operation in DbCache update');
     }
   }
 
-  /// returns the index of the item passed, if not found or there is an error, it returns -1
   int _getItemIndex(Map<String, dynamic> newData) {
-    if (!(state[0].containsKey('dbRef') && newData.containsKey('dbRef'))) {
-      errorPrint('the key dbRef is not found in one of the maps');
+    // Safety check: ensure state is not empty before accessing state[0]
+    if (state.isEmpty || !newData.containsKey('dbRef')) {
+      // If newData doesn't have dbRef, we can't find it.
+      // If state is empty, no item can be found.
+      // The check `state[0].containsKey('dbRef')` is problematic if state is empty.
+      errorPrint('DbCache _getItemIndex: State is empty or newData is missing dbRef.');
       return -1;
     }
+    // Ensure all items in state are expected to have 'dbRef' if this is the comparison key
     for (int index = 0; index < state.length; index++) {
-      if (state[index]['dbRef'] == newData['dbRef']) {
-        return index; // Return the index if found
+      if (state[index].containsKey('dbRef') && state[index]['dbRef'] == newData['dbRef']) {
+        return index;
       }
     }
-    errorPrint('item provided for editing (update or delete) is not found in the dbCache');
+    errorPrint('DbCache _getItemIndex: Item with dbRef ${newData['dbRef']} not found.');
     return -1;
   }
 
-  /// get an item by its provided dbRef
   Map<String, dynamic> getItemByDbRef(String itemDbRef) {
     return getItemByProperty('dbRef', itemDbRef);
   }
 
   Map<String, dynamic> getItemByProperty(String propertyKey, dynamic propertyValue) {
-    for (int index = 0; index < state.length; index++) {
-      if (state[index][propertyKey] == propertyValue) {
-        return state[index];
-      }
+    if (!mounted) return {}; // Or handle as appropriate if accessed after disposal
+    try {
+      return state
+          .firstWhere((item) => item.containsKey(propertyKey) && item[propertyKey] == propertyValue,
+              orElse: () {
+        // errorPrint('Item not found in dbCache by $propertyKey = $propertyValue');
+        return {}; // Return empty map if not found
+      });
+    } catch (e) {
+      errorPrint(
+          'Error in getItemByProperty ($propertyKey = $propertyValue): $e. State length: ${state.length}');
+      return {};
     }
-    errorPrint('item not found in dbCache');
-    return {};
   }
 
-  List<Map<String, dynamic>> get data => state;
+  List<Map<String, dynamic>> get data => mounted ? state : []; // Return empty list if not mounted
 
-  // Function to convert List<Map<String, dynamic>> to FutureOr<List<Map<String, dynamic>>>
-  // it is used main for dropdown with search
   FutureOr<List<Map<String, dynamic>>> getSearchableList(
       {required String filterKey, required String filterValue}) {
-    List<Map<String, dynamic>> filteredList = deepCopyDbCache(state);
-    if (filterValue != '') {
-      filteredList = state.where((map) => map[filterKey].contains(filterValue)).toList();
+    if (!mounted || state.isEmpty) {
+      return Future.value([]); // Return empty list if not mounted or no data
     }
-    return Future.value(filteredList);
+
+    List<Map<String, dynamic>> currentData = deepCopyDbCache(state); // Work on a copy
+
+    if (filterValue.isNotEmpty) {
+      return Future.value(currentData.where((map) {
+        final value = map[filterKey];
+        if (value == null) return false;
+        return value.toString().toLowerCase().contains(filterValue.toLowerCase());
+      }).toList());
+    }
+    return Future.value(currentData); // Return all data if filter is empty
   }
 }
 
-/// create completely new copy of dbCache or any List<Map<String, dynamic>>
 List<Map<String, dynamic>> deepCopyDbCache(List<Map<String, dynamic>> original) {
   return original.map((map) => Map<String, dynamic>.from(map)).toList();
 }

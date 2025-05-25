@@ -1,5 +1,5 @@
+// lib/src/features/home/home_screen.dart
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,59 +27,94 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    ref.read(homeScreenStateController.notifier).initialize();
-  }
+  // initState is no longer needed here for its previous content if
+  // homeScreenController.initialize() was only for loadSalesmanInfo
+  // and that's now in the HomeScreenNotifier constructor.
+  // If initialize() had other purposes, ensure they are covered.
 
   @override
   Widget build(BuildContext context) {
     final homeScreenState = ref.watch(homeScreenStateController);
+    // Watching transactionDbCacheProvider might be for other parts of the screen or legacy.
+    // If only used for debt calculation that's now reactive, this specific watch here might be less critical.
     ref.watch(transactionDbCacheProvider);
 
     return MainFrame(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment:
+            MainAxisAlignment.spaceAround, // Or MainAxisAlignment.start for less stretching
         children: [
           _buildNameSelection(context),
-          if (ref.read(homeScreenStateController.notifier).customerIsSelected()) ...[
+          // Use a more reliable check from the controller if a customer is fully processed
+          if (ref.read(homeScreenStateController.notifier).customerIsSelected() &&
+              !homeScreenState.isLoadingDebt) ...[
             _buildDebtInfo(homeScreenState),
             _buildSelectionButtons(context),
+          ] else if (homeScreenState.isLoadingDebt) ...[
+            // Show loading for debt area if customer is selected but debt is loading
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 50.0),
+              child: Center(child: CircularProgressIndicator()),
+            )
           ]
         ],
       ),
     );
   }
 
-  Widget _buildDebtInfo(HomeScreenState state) {
-    LinearGradient infoBgColorGradient = state.isValidUser
+  Widget _buildDebtInfo(HomeScreenState uiState) {
+    if (uiState.isLoadingDebt) {
+      // This check is now also in the main build logic
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 50.0),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (uiState.debtError != null) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+            child: Text('خطأ في تحميل معلومات الدين: ${uiState.debtError}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red, fontSize: 16))),
+      );
+    }
+
+    LinearGradient infoBgColorGradient = uiState.isValidUser
         ? itemColorGradient
         : const LinearGradient(
             colors: [Color.fromARGB(255, 243, 80, 68), Color.fromARGB(255, 238, 83, 72)]);
+
     return Column(
       children: [
-        if (state.totalDebt != null)
-          buildTotalAmount(context, state.dueDebt, 'الدين المستحق',
+        if (uiState.totalDebt != null)
+          buildTotalAmount(context, uiState.dueDebt, 'الدين المستحق',
               bgColorGradient: infoBgColorGradient, fontColor: Colors.white),
         VerticalGap.l,
-        if (state.totalDebt != null)
-          buildTotalAmount(context, state.totalDebt, 'الدين الكلي',
+        if (uiState.totalDebt != null)
+          buildTotalAmount(context, uiState.totalDebt, 'الدين الكلي',
               bgColorGradient: infoBgColorGradient, fontColor: Colors.white),
         VerticalGap.l,
-        if (state.latestReceiptDate != null)
-          buildTotalAmount(context, state.latestInvoiceDate, 'اخر قائمة',
-              bgColorGradient: infoBgColorGradient, fontColor: Colors.white),
+        if (uiState.latestInvoiceDate != null)
+          buildTotalAmount(context, uiState.latestInvoiceDate,
+              'اخر قائمة', // Works if latestInvoiceDate is DateTime or String
+              bgColorGradient: infoBgColorGradient,
+              fontColor: Colors.white),
         VerticalGap.l,
-        if (state.latestInvoiceDate != null)
-          buildTotalAmount(context, state.latestReceiptDate, 'اخر تسديد',
-              bgColorGradient: infoBgColorGradient, fontColor: Colors.white),
+        if (uiState.latestReceiptDate != null)
+          buildTotalAmount(context, uiState.latestReceiptDate,
+              'اخر تسديد', // Works if latestReceiptDate is DateTime or String
+              bgColorGradient: infoBgColorGradient,
+              fontColor: Colors.white),
       ],
     );
   }
 
   Widget _buildSelectionButtons(BuildContext context) {
     final formData = ref.read(formDataContainerProvider);
+    // Ensure nameDbRef is available before enabling navigation or showing location button
+    final String? customerDbRef = formData['nameDbRef'] as String?;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -87,14 +122,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         HorizontalGap.xl,
         _buildTransactionSelectionButton(context, 'قائمة', AppRoute.items.name),
         HorizontalGap.xl,
-        LocationButton(formData['nameDbRef']),
+        // Only show LocationButton if a customer with a dbRef is selected
+        if (customerDbRef != null && customerDbRef.isNotEmpty) LocationButton(customerDbRef),
       ],
     );
   }
 
   Widget _buildNameSelection(BuildContext context) {
     final formData = ref.watch(formDataContainerProvider);
-    final customerDbCache = ref.watch(customerDbCacheProvider);
+    // Use ref.watch to get the notifier to ensure the DropDownWithSearch gets the latest instance
+    // if customerDbCacheProvider is ever recomputed.
+    final customerDbCacheNotifier = ref.watch(customerDbCacheProvider.notifier);
     final cartItems = ref.watch(cartProvider);
 
     return Row(
@@ -103,11 +141,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Expanded(
           child: DropDownWithSearch(
             label: 'الزبون',
-            initialValue: formData['name'],
-            onOpenFn: (p0) async {
-              if (customerDbCache.isEmpty) {
-                await ref.read(dataLoadingController.notifier).loadCustomers();
-              }
+            initialValue: formData['name'] as String?,
+            onOpenFn: (currentlySelectedItemMap) async {
+              // The explicit loadCustomers call was removed when DbCache became stream-backed.
               if (cartItems.isNotEmpty && context.mounted) {
                 return await ref
                     .read(homeScreenStateController.notifier)
@@ -115,10 +151,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               }
               return true;
             },
-            onChangedFn: (customer) {
-              ref.read(homeScreenStateController.notifier).selectCustomer(ref, customer);
+            onChangedFn: (customerMap) {
+              ref.read(homeScreenStateController.notifier).selectCustomer(ref, customerMap);
             },
-            dbCache: ref.read(customerDbCacheProvider.notifier),
+            dbCache: customerDbCacheNotifier, // Pass the watched notifier instance
           ),
         ),
       ],
@@ -130,21 +166,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return InkWell(
       onTap: () async {
-        if (formData.containsKey('name') && formData.containsKey('nameDbRef')) {
-          // before going to new receipt or new invoice we must reset the form and cart
-          // maybe we were in home screen after loading previou transaction
+        // Ensure a customer is actually selected with a dbRef
+        if (formData.containsKey('nameDbRef') && (formData['nameDbRef'] as String?) != null) {
           final formDataNotifier = ref.read(formDataContainerProvider.notifier);
           final name = formData['name'];
           final nameDbRef = formData['nameDbRef'];
           final sellingPriceType = formData['sellingPriceType'];
-          formDataNotifier.reset();
+
+          formDataNotifier.reset(); // This clears name, nameDbRef etc.
           ref.read(cartProvider.notifier).reset();
 
-          // now store customer data in the new transaction
+          // Re-add essential customer data for the new transaction
           formDataNotifier.addProperty('name', name);
           formDataNotifier.addProperty('nameDbRef', nameDbRef);
           formDataNotifier.addProperty('sellingPriceType', sellingPriceType);
           formDataNotifier.addProperty('isEditable', true);
+
           if (context.mounted) {
             GoRouter.of(context).pushNamed(routeName);
             if (routeName == AppRoute.items.name) {
@@ -175,7 +212,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-// note that I added cool down to prevent multiple tapping for visit button
+// LocationButton and _LocationButtonState code should be here as per your original file.
+// (Copy the full LocationButton and _LocationButtonState classes from your previous version of home_screen.dart)
 class LocationButton extends ConsumerStatefulWidget {
   const LocationButton(this.customerDbRef, {super.key});
   final String customerDbRef;
@@ -185,14 +223,11 @@ class LocationButton extends ConsumerStatefulWidget {
 }
 
 class _LocationButtonState extends ConsumerState<LocationButton> {
-  // State variable to track if button is on cooldown
   bool _isOnCooldown = false;
   Timer? _cooldownTimer;
 
   @override
   void dispose() {
-    // Cancel the timer if the widget is disposed to prevent memory leaks
-    // and errors from calling setState on an unmounted widget.
     _cooldownTimer?.cancel();
     super.dispose();
   }
@@ -201,13 +236,8 @@ class _LocationButtonState extends ConsumerState<LocationButton> {
     setState(() {
       _isOnCooldown = true;
     });
-
-    // Cancel any existing timer before starting a new one
     _cooldownTimer?.cancel();
-
     _cooldownTimer = Timer(const Duration(seconds: 10), () {
-      // When the timer finishes, reset the cooldown state
-      // Check if the widget is still mounted before calling setState
       if (mounted) {
         setState(() {
           _isOnCooldown = false;
@@ -216,9 +246,7 @@ class _LocationButtonState extends ConsumerState<LocationButton> {
     });
   }
 
-  // Separate function for the actual logic executed on tap
   Future<void> _performTapAction() async {
-    // --- This is your original async logic ---
     try {
       String? salesmanDbRef = ref.read(salesmanInfoProvider.notifier).data.dbRef;
 
@@ -252,37 +280,28 @@ class _LocationButtonState extends ConsumerState<LocationButton> {
       } else if (!success && mounted) {
         failureUserMessage(context, 'لم يتم تسجيل الزيارة');
       }
-    } catch (e) {
-      errorPrint("Error during location button tap action: $e");
+    } catch (e, s) {
+      errorPrint("Error during location button tap action: $e Stack: $s");
       if (mounted) {
         failureUserMessage(context, 'حدث خطأ غير متوقع');
       }
     }
-    // --- End of original async logic ---
   }
 
   void _handleTap() {
-    // 1. Check if already on cooldown. If so, do nothing.
     if (_isOnCooldown) {
       tempPrint("Button on cooldown. Tap ignored.");
       return;
     }
-
-    // 2. Start the 30-second cooldown immediately.
     _startCooldown();
-
-    // 3. Execute the actual tap actions (async).
-    //    Note: The cooldown runs independently of this execution.
     _performTapAction();
   }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      // Disable tap if on cooldown
       onTap: _isOnCooldown ? null : _handleTap,
       child: Opacity(
-        // Make it visually apparent when disabled
         opacity: _isOnCooldown ? 0.5 : 1.0,
         child: Container(
           width: 75,
@@ -294,7 +313,6 @@ class _LocationButtonState extends ConsumerState<LocationButton> {
           ),
           padding: const EdgeInsets.all(12),
           child: const Center(
-            // Text remains the same, disabled state handled by InkWell/Opacity
             child: Text(
               'زيارة',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
@@ -305,51 +323,3 @@ class _LocationButtonState extends ConsumerState<LocationButton> {
     );
   }
 }
-
-// class LocationButton extends ConsumerWidget {
-//   const LocationButton(this.customerDbRef, {super.key});
-//   final String customerDbRef;
-
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     return InkWell(
-//       onTap: () async {
-//         String? salesmanDbRef = ref.read(salesmanInfoProvider.notifier).data.dbRef;
-//         if (salesmanDbRef == null) {
-//           await ref.read(dataLoadingController.notifier).loadSalesmanInfo();
-//         }
-//         if (context.mounted) {
-//           bool isTransactionAllowed = await isInsideCustomerZone(context, ref, customerDbRef);
-//           if (!isTransactionAllowed && context.mounted) {
-//             // if out of customer zone, visit is not registered
-//             failureUserMessage(context, 'انت خارج نطاق الزبون');
-//             return;
-//           }
-//         }
-
-//         bool success = await registerVisit(ref, salesmanDbRef!, customerDbRef);
-//         if (success && context.mounted) {
-//           successUserMessage(context, 'تم تسجيل الزيارة بنجاح');
-//         } else if (!success && context.mounted) {
-//           failureUserMessage(context, 'لم يتم تسجيل الزيارة');
-//         }
-//       },
-//       child: Container(
-//         width: 75,
-//         height: 80,
-//         decoration: BoxDecoration(
-//           border: Border.all(),
-//           borderRadius: const BorderRadius.all(Radius.circular(6)),
-//           gradient: itemColorGradient,
-//         ),
-//         padding: const EdgeInsets.all(12),
-//         child: const Center(
-//           child: Text(
-//             'زيارة',
-//             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

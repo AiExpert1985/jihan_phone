@@ -20,7 +20,10 @@ void main() async {
   registerErrorHandlers();
 
 // Enable offline persistence (make firebase work offline)
-  FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED, // Instead of default 40MB
+  );
 
   runApp(const ProviderScope(
     child: MyApp(),

@@ -109,6 +109,7 @@ class PreviousInvoices extends ConsumerWidget {
 
   void _loadFormData(WidgetRef ref, Transaction transaction, bool isEditable) {
     final formDataNotifier = ref.read(formDataContainerProvider.notifier);
+    formDataNotifier.reset();
     formDataNotifier.addProperty('name', transaction.name);
     formDataNotifier.addProperty('nameDbRef', transaction.nameDbRef);
     formDataNotifier.addProperty('sellingPriceType', transaction.sellingPriceType);
@@ -123,6 +124,7 @@ class PreviousInvoices extends ConsumerWidget {
     }
     final productDbCache = ref.watch(productsDbCacheProvider.notifier);
 
+    ref.read(cartProvider.notifier).reset();
     for (var itemData in transaction.items!) {
       final product = productDbCache.getItemByDbRef(itemData['dbRef']);
       List<String> productImageUrls = List<String>.from(product['imageUrls']);

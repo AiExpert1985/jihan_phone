@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tablets/src/common/forms/edit_box.dart';
-import 'package:tablets/src/common/functions/calculate_product_stock.dart';
+import 'package:tablets/src/common/functions/get_product_stock.dart';
 import 'package:tablets/src/common/functions/utils.dart';
 import 'package:tablets/src/common/values/constants.dart';
 import 'package:tablets/src/common/values/gaps.dart';
@@ -71,7 +71,7 @@ class _ItemsGridState extends ConsumerState<ItemsGrid> {
                 // price depends on customer
                 final price =
                     sellingPriceType == 'retail' ? product.sellRetailPrice : product.sellWholePrice;
-                final productStock = calculateProductStock(ref, product.dbRef);
+                final productStock = getProductStock(ref, product.dbRef);
                 final textBgColor = productStock > 0
                     ? const Color.fromARGB(181, 150, 143, 79)
                     : const Color.fromARGB(190, 244, 67, 54);

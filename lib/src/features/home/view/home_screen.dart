@@ -14,7 +14,6 @@ import 'package:tablets/src/features/home/controller/home_screen_controller.dart
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
-import 'package:tablets/src/features/transactions/controllers/transaction_db_cache_provider.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
 import 'package:tablets/src/common/widgets/common_transaction_widgets.dart';
 import 'package:tablets/src/common/forms/drop_down_with_search.dart';
@@ -35,27 +34,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final homeScreenState = ref.watch(homeScreenStateController);
-    // Watching transactionDbCacheProvider might be for other parts of the screen or legacy.
-    // If only used for debt calculation that's now reactive, this specific watch here might be less critical.
-    ref.watch(transactionDbCacheProvider);
 
     return MainFrame(
       child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceAround, // Or MainAxisAlignment.start for less stretching
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildNameSelection(context),
-          // Use a more reliable check from the controller if a customer is fully processed
-          if (ref.read(homeScreenStateController.notifier).customerIsSelected() &&
-              !homeScreenState.isLoadingDebt) ...[
-            _buildDebtInfo(homeScreenState),
+          if (ref.read(homeScreenStateController.notifier).customerIsSelected()) ...[
+            if (homeScreenState.isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 50.0),
+                child: CircularProgressIndicator(color: Colors.white),
+              )
+            else
+              _buildDebtInfo(homeScreenState),
             _buildSelectionButtons(context),
-          ] else if (homeScreenState.isLoadingDebt) ...[
-            // Show loading for debt area if customer is selected but debt is loading
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 50.0),
-              child: Center(child: CircularProgressIndicator()),
-            )
           ]
         ],
       ),
@@ -63,23 +56,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildDebtInfo(HomeScreenState uiState) {
-    if (uiState.isLoadingDebt) {
-      // This check is now also in the main build logic
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 50.0),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (uiState.debtError != null) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-            child: Text('خطأ في تحميل معلومات الدين: ${uiState.debtError}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red, fontSize: 16))),
-      );
-    }
-
     LinearGradient infoBgColorGradient = uiState.isValidUser
         ? itemColorGradient
         : const LinearGradient(
@@ -96,16 +72,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               bgColorGradient: infoBgColorGradient, fontColor: Colors.white),
         VerticalGap.l,
         if (uiState.latestInvoiceDate != null)
-          buildTotalAmount(context, uiState.latestInvoiceDate,
-              'اخر قائمة', // Works if latestInvoiceDate is DateTime or String
-              bgColorGradient: infoBgColorGradient,
-              fontColor: Colors.white),
+          buildTotalAmount(context, uiState.latestInvoiceDate, 'اخر قائمة',
+              bgColorGradient: infoBgColorGradient, fontColor: Colors.white),
         VerticalGap.l,
         if (uiState.latestReceiptDate != null)
-          buildTotalAmount(context, uiState.latestReceiptDate,
-              'اخر تسديد', // Works if latestReceiptDate is DateTime or String
-              bgColorGradient: infoBgColorGradient,
-              fontColor: Colors.white),
+          buildTotalAmount(context, uiState.latestReceiptDate, 'اخر تسديد',
+              bgColorGradient: infoBgColorGradient, fontColor: Colors.white),
       ],
     );
   }

@@ -6,13 +6,15 @@ import 'package:tablets/src/common/providers/last_access_provider.dart';
 import 'package:tablets/src/common/providers/salesman_info_provider.dart';
 import 'package:tablets/src/features/login/repository/accounts_repository.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
+import 'package:tablets/src/features/transactions/controllers/customer_screen_data_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/pending_transaction_db_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/products_db_cache_provider.dart';
-import 'package:tablets/src/features/transactions/controllers/transaction_db_cache_provider.dart';
+import 'package:tablets/src/features/transactions/controllers/product_screen_data_cache_provider.dart';
 import 'package:tablets/src/features/transactions/repository/customer_repository_provider.dart';
+import 'package:tablets/src/features/transactions/repository/customer_screen_data_repository_provider.dart';
 import 'package:tablets/src/features/transactions/repository/pending_transaction_repository_provider.dart';
 import 'package:tablets/src/features/transactions/repository/products_repository_provider.dart';
-import 'package:tablets/src/features/transactions/repository/transactions_repository_provider.dart';
+import 'package:tablets/src/features/transactions/repository/product_screen_data_repository_provider.dart';
 
 // Create a provider for the LoadingNotifier
 
@@ -33,23 +35,23 @@ class LoadingNotifier extends StateNotifier<bool> {
     state = false; // Set loading to false
   }
 
-  // we only set customers once a day, in case there is update, user can press refresh to synch data with
-  // fire store (the loadFreshData = true in this case)
+  // Load customers and customer_screen_data together (once per day or on manual refresh)
   Future<void> loadCustomers({bool loadFreshData = false}) async {
     final salesmanInfoNotifier = _ref.read(salesmanInfoProvider.notifier);
     String? salesmanDbRef = salesmanInfoNotifier.data.dbRef;
-    // don't load customers unless salesman info is loaded, because it will load all customers not his customers only
-    if (salesmanDbRef == null) {
-      return;
-    }
+    if (salesmanDbRef == null) return;
+
     final lastAccessNotifier = _ref.read(lastAccessProvider.notifier);
-    final customersRepository = _ref.read(customerRepositoryProvider);
     final customerDbCache = _ref.read(customerDbCacheProvider.notifier);
+    final customerScreenDataCache = _ref.read(customerScreenDataCacheProvider.notifier);
+
     startLoading();
     if (customerDbCache.data.isEmpty || lastAccessNotifier.hasOneDayPassed() || loadFreshData) {
-      final customers = await customersRepository.fetchItemListAsMaps(
+      final customers = await _ref.read(customerRepositoryProvider).fetchItemListAsMaps(
           filterKey: 'salesmanDbRef', filterValue: salesmanDbRef);
+      final screenData = await _ref.read(customerScreenDataRepositoryProvider).fetchItemListAsMaps();
       customerDbCache.set(customers);
+      customerScreenDataCache.set(screenData);
       lastAccessNotifier.setLastAccessDate();
     }
     stopLoading();
@@ -81,29 +83,18 @@ class LoadingNotifier extends StateNotifier<bool> {
     }
   }
 
-// note that we don't store copy of products (unlike customers and transactions)
-// the reason is that customers are rarely changed, and transactions of customers for one saleman are
-// not changed during the day (because they are mostly changed by salesman visit)
-  Future<void> loadProducts() async {
-    final productsRepository = _ref.read(productsRepositoryProvider);
+  // Load products and product_screen_data together (lazy loaded when user navigates to items screen)
+  Future<void> loadProducts({bool loadFreshData = false}) async {
+    final lastAccessNotifier = _ref.read(lastAccessProvider.notifier);
     final productDbCache = _ref.read(productsDbCacheProvider.notifier);
-    startLoading();
-    final products = await productsRepository.fetchItemListAsMaps();
-    productDbCache.set(products);
-    stopLoading();
-  }
+    final productScreenDataCache = _ref.read(productScreenDataCacheProvider.notifier);
 
-// we keep a copy of transaction data, because it is expensive in loading (about 1000 document)
-// which makes loading slow, and cost money in firebase, I update the cache once a day
-// loadingFreshData is used for refresh button, which salesman might need if the customer data where updated
-// during the day, because in our app, the data is only updated onces a day at the first app access
-  Future<void> loadTransactions({bool loadFreshData = false}) async {
-    if (_ref.read(transactionDbCacheProvider).isEmpty ||
-        _ref.read(lastAccessProvider.notifier).hasOneDayPassed() ||
-        loadFreshData) {
-      final transactions = await _ref.read(transactionRepositoryProvider).fetchItemListAsMaps();
-      _ref.read(transactionDbCacheProvider.notifier).set(transactions);
-      _ref.read(lastAccessProvider.notifier).setLastAccessDate();
+    startLoading();
+    if (productDbCache.data.isEmpty || lastAccessNotifier.hasOneDayPassed() || loadFreshData) {
+      final products = await _ref.read(productsRepositoryProvider).fetchItemListAsMaps();
+      final screenData = await _ref.read(productScreenDataRepositoryProvider).fetchItemListAsMaps();
+      productDbCache.set(products);
+      productScreenDataCache.set(screenData);
     }
     stopLoading();
   }

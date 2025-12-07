@@ -1,18 +1,27 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tablets/src/common/forms/drop_down_with_search.dart';
 import 'package:tablets/src/common/functions/user_messages.dart';
+import 'package:tablets/src/common/functions/utils.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:tablets/src/common/widgets/custom_icons.dart';
 import 'package:tablets/src/common/widgets/main_frame.dart';
 import 'package:tablets/src/features/transactions/common/common_functions.dart';
-import 'package:tablets/src/features/transactions/common/customer_debt_info.dart';
 import 'package:tablets/src/features/transactions/controllers/cart_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
+import 'package:tablets/src/features/transactions/controllers/customer_screen_data_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/form_data_container.dart';
 import 'package:tablets/src/features/transactions/common/common_widgets.dart';
 import 'package:tablets/src/routers/go_router_provider.dart';
+
+String _formatTimestamp(dynamic value) {
+  if (value == null) return 'لا يوجد';
+  if (value is Timestamp) return formatDate(value.toDate());
+  if (value is DateTime) return formatDate(value);
+  return value.toString();
+}
 
 class InvoiceForm extends ConsumerStatefulWidget {
   const InvoiceForm({super.key});
@@ -85,18 +94,17 @@ class _ReceiptFormState extends ConsumerState<InvoiceForm> {
           child: DropDownWithSearch(
             initialValue: formDataNotifier.data['name'],
             onChangedFn: (customer) {
-              num paymentDurationLimit = customer['paymentDurationLimit'];
               formDataNotifier.addProperty('name', customer['name']);
               formDataNotifier.addProperty('nameDbRef', customer['dbRef']);
               formDataNotifier.addProperty('sellingPriceType', customer['sellingPriceType']);
-              final customerDebtInfo =
-                  getCustomerDebtInfo(ref, customer['dbRef'], paymentDurationLimit);
-              // set customer debt info
-              totalDebt = customerDebtInfo['totalDebt'];
-              dueDebt = customerDebtInfo['dueDebt'];
-              latestReceiptDate = customerDebtInfo['lastReceiptDate'] ?? 'لا يوجد';
-              latestInvoiceDate = customerDebtInfo['latestInvoiceDate'] ?? 'لا يوجد';
-              _validateCustomer(paymentDurationLimit, customer['creditLimit']);
+              // Get debt info from customer_screen_data cache
+              final screenDataCache = ref.read(customerScreenDataCacheProvider.notifier);
+              final screenData = screenDataCache.getItemByDbRef(customer['dbRef']);
+              totalDebt = screenData['totalDebt'] as num? ?? 0;
+              dueDebt = screenData['dueDebt'] as num? ?? 0;
+              latestReceiptDate = _formatTimestamp(screenData['lastReceiptDate']);
+              latestInvoiceDate = _formatTimestamp(screenData['lastInvoiceDate']);
+              _validateCustomer(customer['paymentDurationLimit'], customer['creditLimit']);
             },
             dbCache: salesmanCustomersDb,
           ),

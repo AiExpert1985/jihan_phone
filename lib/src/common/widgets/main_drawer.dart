@@ -60,11 +60,7 @@ class MainDrawer extends ConsumerWidget {
                       onTap: () {
                         Navigator.pop(context);
                         ref.read(dataLoadingController.notifier).loadCustomers(loadFreshData: true);
-                        ref
-                            .read(dataLoadingController.notifier)
-                            .loadTransactions(loadFreshData: true);
-                        // reset the form and cart, this is important because if debt data is displayed, it might
-                        // be wrong, so we need to clear the home screen
+                        ref.read(dataLoadingController.notifier).loadProducts(loadFreshData: true);
                         ref.read(formDataContainerProvider.notifier).reset();
                         ref.read(cartProvider.notifier).reset();
                       },

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tablets/src/common/functions/calculate_product_stock.dart';
+import 'package:tablets/src/common/functions/get_product_stock.dart';
 import 'package:tablets/src/common/functions/utils.dart';
 import 'package:tablets/src/common/providers/data_loading_provider.dart';
 import 'package:tablets/src/common/providers/salesman_info_provider.dart';
@@ -144,7 +144,7 @@ class PreviousInvoices extends ConsumerWidget {
         sellingPrice: itemData['sellingPrice'],
         soldQuantity: itemData['soldQuantity'],
         weight: itemData['weight'],
-        stock: calculateProductStock(ref, itemData['dbRef']),
+        stock: getProductStock(ref, itemData['dbRef']),
       );
       ref.read(cartProvider.notifier).addItem(item);
     }

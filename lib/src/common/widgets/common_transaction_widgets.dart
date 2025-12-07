@@ -39,17 +39,22 @@ class FormFieldLabel extends StatelessWidget {
 
 Widget buildTotalAmount(BuildContext context, dynamic amount, String label,
     {LinearGradient bgColorGradient = itemColorGradient, Color fontColor = Colors.yellow}) {
+  String displayValue;
+  if (amount is DateTime) {
+    displayValue = formatDate(amount);
+  } else if (amount is String) {
+    displayValue = amount;
+  } else {
+    displayValue = doubleToStringWithComma(amount);
+  }
   return Container(
     height: 45,
-    // width: 350,
     padding: const EdgeInsets.all(5),
     decoration: BoxDecoration(
         gradient: bgColorGradient, borderRadius: const BorderRadius.all(Radius.circular(6))),
     child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
       StyledTotalText(label, fontColor),
-      amount is DateTime
-          ? StyledTotalText(formatDate(amount), fontColor)
-          : StyledTotalText(doubleToStringWithComma(amount), fontColor),
+      StyledTotalText(displayValue, fontColor),
     ]),
   );
 }

@@ -170,20 +170,24 @@ class ShoppingCart extends ConsumerWidget {
                   }
                 }
 
-                bool insideCustomerZone = false;
-                if (context.mounted) {
-                  insideCustomerZone =
-                      await isInsideCustomerZone(context, ref, formData['nameDbRef']);
-                }
+                // Wrap visit registration in try-catch to ensure reset/navigation happens
+                try {
+                  bool insideCustomerZone = false;
+                  if (context.mounted) {
+                    insideCustomerZone =
+                        await isInsideCustomerZone(context, ref, formData['nameDbRef']);
+                  }
 
-                bool successfulTaskUpdate = await registerVisit(
-                    ref, salesmanInfo.dbRef!, formData['nameDbRef'],
-                    isInvoice: true, insideCustomerZone: insideCustomerZone);
-                // if pending exists update it, otherwise add new
-                if (successfulTaskUpdate && context.mounted) {
-                  successUserMessage(context, 'تم تحديث الزيارة');
-                } else if (!successfulTaskUpdate && context.mounted) {
-                  successUserMessage(context, 'لم يتم تحديث الزيارة');
+                  bool successfulTaskUpdate = await registerVisit(
+                      ref, salesmanInfo.dbRef!, formData['nameDbRef'],
+                      isInvoice: true, insideCustomerZone: insideCustomerZone);
+                  if (successfulTaskUpdate && context.mounted) {
+                    successUserMessage(context, 'تم تحديث الزيارة');
+                  } else if (!successfulTaskUpdate && context.mounted) {
+                    successUserMessage(context, 'لم يتم تحديث الزيارة');
+                  }
+                } catch (e) {
+                  debugPrint('Error during visit registration: $e');
                 }
 
                 // after adding the transaction, we reset data and go to main menu

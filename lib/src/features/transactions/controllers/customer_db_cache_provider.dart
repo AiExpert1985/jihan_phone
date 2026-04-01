@@ -5,7 +5,7 @@ import 'package:tablets/src/features/transactions/repository/customer_repository
 import 'package:tablets/src/common/providers/salesman_info_provider.dart';
 
 final customerDbCacheProvider =
-    StateNotifierProvider.autoDispose<DbCache, List<Map<String, dynamic>>>((ref) {
+    StateNotifierProvider<DbCache, List<Map<String, dynamic>>>((ref) {
   final customerRepo = ref.watch(customerRepositoryProvider);
   final salesmanInfo = ref.watch(salesmanInfoProvider);
   final salesmanDbRef = salesmanInfo.dbRef;

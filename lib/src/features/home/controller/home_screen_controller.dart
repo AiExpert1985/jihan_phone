@@ -71,7 +71,6 @@ class HomeScreenNotifier extends StateNotifier<HomeScreenState> {
   final Ref _ref;
 
   void _retryDebtLookupIfNeeded() {
-    if (!state.isLoading) return;
     final formData = _ref.read(formDataContainerProvider);
     final customerDbRef = formData['nameDbRef'] as String?;
     if (customerDbRef != null && customerDbRef.isNotEmpty) {

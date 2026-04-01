@@ -1,6 +1,5 @@
 // lib/src/common/classes/db_repository.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:tablets/src/common/interfaces/base_item.dart';
 import 'package:tablets/src/common/functions/debug_print.dart';
 
@@ -11,110 +10,48 @@ class DbRepository {
   final String _collectionName;
   final String _dbReferenceKey = 'dbRef';
 
+  /// Uses dbRef as document ID to ensure idempotency (prevents duplicates on retry)
+  /// With persistence enabled, writes go to local cache first and sync in background
   Future<void> addItem(BaseItem item) async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult.contains(ConnectivityResult.wifi) ||
-        connectivityResult.contains(ConnectivityResult.ethernet) ||
-        connectivityResult.contains(ConnectivityResult.vpn) ||
-        connectivityResult.contains(ConnectivityResult.mobile)) {
-      try {
-        await _firestore.collection(_collectionName).doc().set(item.toMap());
-        tempPrint('Item added to live firestore successfully! ($_collectionName)');
-        return;
-      } catch (e) {
-        errorPrint('Error adding item to live firestore ($_collectionName): $e');
-        return;
-      }
+    try {
+      await _firestore.collection(_collectionName).doc(item.dbRef).set(item.toMap());
+      tempPrint('Item added successfully! ($_collectionName)');
+    } catch (e) {
+      errorPrint('Error adding item to firestore ($_collectionName): $e');
     }
-    final docRef = _firestore.collection(_collectionName).doc();
-    docRef.set(item.toMap()).then((_) {
-      tempPrint('Item added to firestore cache! ($_collectionName)');
-    }).catchError((e) {
-      errorPrint('Error adding item to firestore cache ($_collectionName): $e');
-    });
   }
 
   Future<void> updateItem(BaseItem updatedItem) async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult.contains(ConnectivityResult.wifi) ||
-        connectivityResult.contains(ConnectivityResult.ethernet) ||
-        connectivityResult.contains(ConnectivityResult.vpn) ||
-        connectivityResult.contains(ConnectivityResult.mobile)) {
-      try {
-        final query = _firestore
-            .collection(_collectionName)
-            .where(_dbReferenceKey, isEqualTo: updatedItem.dbRef);
-        // Get from server or cache for update consistency if online
-        final querySnapshot = await query.get();
-        if (querySnapshot.size > 0) {
-          final documentRef = querySnapshot.docs[0].reference;
-          await documentRef.update(updatedItem.toMap());
-          debugLog('Item updated in live firestore successfully! ($_collectionName)');
-        } else {
-          debugLog(
-              'Item not found for update in live firestore: ${updatedItem.dbRef} ($_collectionName)');
-        }
-        return;
-      } catch (e) {
-        errorPrint('Error updating item in live firestore ($_collectionName): $e');
-        return;
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where(_dbReferenceKey, isEqualTo: updatedItem.dbRef)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        await querySnapshot.docs.first.reference.update(updatedItem.toMap());
+        debugLog('Item updated successfully! ($_collectionName)');
+      } else {
+        debugLog('Item not found for update: ${updatedItem.dbRef} ($_collectionName)');
       }
-    }
-    // when offline
-    final query =
-        _firestore.collection(_collectionName).where(_dbReferenceKey, isEqualTo: updatedItem.dbRef);
-    final querySnapshot = await query.get(const GetOptions(source: Source.cache));
-    if (querySnapshot.size > 0) {
-      final documentRef = querySnapshot.docs[0].reference;
-      await documentRef.update(updatedItem.toMap()).then((_) {
-        tempPrint('Item updated in firestore cache! ($_collectionName)');
-      }).catchError((e) {
-        errorPrint('Error updating item in firebase cache ($_collectionName): $e');
-      });
-    } else {
-      tempPrint('Item not found for update in cache: ${updatedItem.dbRef} ($_collectionName)');
+    } catch (e) {
+      errorPrint('Error updating item in firestore ($_collectionName): $e');
     }
   }
 
   Future<void> deleteItem(BaseItem item) async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult.contains(ConnectivityResult.wifi) ||
-        connectivityResult.contains(ConnectivityResult.ethernet) ||
-        connectivityResult.contains(ConnectivityResult.vpn) ||
-        connectivityResult.contains(ConnectivityResult.mobile)) {
-      try {
-        final querySnapshot = await _firestore
-            .collection(_collectionName)
-            .where(_dbReferenceKey, isEqualTo: item.dbRef)
-            .get(); // Get from server for consistency
-        if (querySnapshot.size > 0) {
-          final documentRef = querySnapshot.docs[0].reference;
-          await documentRef.delete();
-          tempPrint('Item deleted from live firestore successfully! ($_collectionName)');
-        } else {
-          tempPrint(
-              'Item not found for deletion in live firestore: ${item.dbRef} ($_collectionName)');
-        }
-        return;
-      } catch (e) {
-        errorPrint('Error deleting item from firestore ($_collectionName): $e');
-        return;
+    try {
+      final querySnapshot = await _firestore
+          .collection(_collectionName)
+          .where(_dbReferenceKey, isEqualTo: item.dbRef)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        await querySnapshot.docs.first.reference.delete();
+        tempPrint('Item deleted successfully! ($_collectionName)');
+      } else {
+        tempPrint('Item not found for deletion: ${item.dbRef} ($_collectionName)');
       }
-    }
-    // when offline
-    final querySnapshot = await _firestore
-        .collection(_collectionName)
-        .where(_dbReferenceKey, isEqualTo: item.dbRef)
-        .get(const GetOptions(source: Source.cache));
-    if (querySnapshot.size > 0) {
-      final documentRef = querySnapshot.docs[0].reference;
-      await documentRef.delete().then((_) {
-        tempPrint('Item deleted from firestore cache! ($_collectionName)');
-      }).catchError((e) {
-        errorPrint('Error deleting item from firestore cache ($_collectionName): $e');
-      });
-    } else {
-      tempPrint('Item not found for deletion in cache: ${item.dbRef} ($_collectionName)');
+    } catch (e) {
+      errorPrint('Error deleting item from firestore ($_collectionName): $e');
     }
   }
 
@@ -187,23 +124,11 @@ class DbRepository {
         }
       }
 
-      final connectivityResult = await Connectivity().checkConnectivity();
-      if (connectivityResult.contains(ConnectivityResult.wifi) ||
-          connectivityResult.contains(ConnectivityResult.ethernet) ||
-          connectivityResult.contains(ConnectivityResult.vpn) ||
-          connectivityResult.contains(ConnectivityResult.mobile)) {
-        final snapshot = await query.get();
-        tempPrint('data fetched from firebase ($_collectionName) live data');
-        return snapshot.docs
-            .map((docSnapshot) => docSnapshot.data() as Map<String, dynamic>)
-            .toList();
-      } else {
-        tempPrint('data fetched from cache ($_collectionName)');
-        final cachedSnapshot = await query.get(const GetOptions(source: Source.cache));
-        return cachedSnapshot.docs
-            .map((docSnapshot) => docSnapshot.data() as Map<String, dynamic>)
-            .toList();
-      }
+      final snapshot = await query.get();
+      tempPrint('data fetched from firebase ($_collectionName)');
+      return snapshot.docs
+          .map((docSnapshot) => docSnapshot.data() as Map<String, dynamic>)
+          .toList();
     } catch (e) {
       debugLog('Error during fetching items from Firebase ($_collectionName) - $e');
       return [];

@@ -54,7 +54,7 @@ class DbCache extends StateNotifier<List<Map<String, dynamic>>> {
         onError: (error) {
           errorPrint(
               'Error in DbCache stream for $_collectionNameForLogging (filter: $_streamFilterKey): $error');
-          if (mounted) state = []; // Optionally, set state to an error state or an empty list
+          // Don't wipe data on error - keep existing cached data
         },
       );
     }

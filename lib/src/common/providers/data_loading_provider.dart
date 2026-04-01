@@ -2,19 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tablets/src/common/values/gaps.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tablets/src/common/providers/last_access_provider.dart';
 import 'package:tablets/src/common/providers/salesman_info_provider.dart';
 import 'package:tablets/src/features/login/repository/accounts_repository.dart';
-import 'package:tablets/src/features/transactions/controllers/customer_db_cache_provider.dart';
-import 'package:tablets/src/features/transactions/controllers/customer_screen_data_cache_provider.dart';
 import 'package:tablets/src/features/transactions/controllers/pending_transaction_db_cache_provider.dart';
-import 'package:tablets/src/features/transactions/controllers/products_db_cache_provider.dart';
-import 'package:tablets/src/features/transactions/controllers/product_screen_data_cache_provider.dart';
-import 'package:tablets/src/features/transactions/repository/customer_repository_provider.dart';
-import 'package:tablets/src/features/transactions/repository/customer_screen_data_repository_provider.dart';
 import 'package:tablets/src/features/transactions/repository/pending_transaction_repository_provider.dart';
-import 'package:tablets/src/features/transactions/repository/products_repository_provider.dart';
-import 'package:tablets/src/features/transactions/repository/product_screen_data_repository_provider.dart';
 
 // Create a provider for the LoadingNotifier
 
@@ -35,26 +26,10 @@ class LoadingNotifier extends StateNotifier<bool> {
     state = false; // Set loading to false
   }
 
-  // Load customers and customer_screen_data together (once per day or on manual refresh)
+  // Customer data is now loaded automatically via Firestore streams in customerDbCacheProvider
+  // and customerScreenDataCacheProvider. This method is kept for API compatibility.
   Future<void> loadCustomers({bool loadFreshData = false}) async {
-    final salesmanInfoNotifier = _ref.read(salesmanInfoProvider.notifier);
-    String? salesmanDbRef = salesmanInfoNotifier.data.dbRef;
-    if (salesmanDbRef == null) return;
-
-    final lastAccessNotifier = _ref.read(lastAccessProvider.notifier);
-    final customerDbCache = _ref.read(customerDbCacheProvider.notifier);
-    final customerScreenDataCache = _ref.read(customerScreenDataCacheProvider.notifier);
-
-    startLoading();
-    if (customerDbCache.data.isEmpty || lastAccessNotifier.hasOneDayPassed() || loadFreshData) {
-      final customers = await _ref.read(customerRepositoryProvider).fetchItemListAsMaps(
-          filterKey: 'salesmanDbRef', filterValue: salesmanDbRef);
-      final screenData = await _ref.read(customerScreenDataRepositoryProvider).fetchItemListAsMaps();
-      customerDbCache.set(customers);
-      customerScreenDataCache.set(screenData);
-      lastAccessNotifier.setLastAccessDate();
-    }
-    stopLoading();
+    // No-op: streams handle data loading automatically
   }
 
   Future<void> loadPendingTransactions() async {
@@ -83,20 +58,10 @@ class LoadingNotifier extends StateNotifier<bool> {
     }
   }
 
-  // Load products and product_screen_data together (lazy loaded when user navigates to items screen)
+  // Product data is now loaded automatically via Firestore streams in productsDbCacheProvider
+  // and productScreenDataCacheProvider. This method is kept for API compatibility.
   Future<void> loadProducts({bool loadFreshData = false}) async {
-    final lastAccessNotifier = _ref.read(lastAccessProvider.notifier);
-    final productDbCache = _ref.read(productsDbCacheProvider.notifier);
-    final productScreenDataCache = _ref.read(productScreenDataCacheProvider.notifier);
-
-    startLoading();
-    if (productDbCache.data.isEmpty || lastAccessNotifier.hasOneDayPassed() || loadFreshData) {
-      final products = await _ref.read(productsRepositoryProvider).fetchItemListAsMaps();
-      final screenData = await _ref.read(productScreenDataRepositoryProvider).fetchItemListAsMaps();
-      productDbCache.set(products);
-      productScreenDataCache.set(screenData);
-    }
-    stopLoading();
+    // No-op: streams handle data loading automatically
   }
 }
 
